@@ -111,19 +111,19 @@ def cmd_rss_remove(update, context):
 
 
 def cmd_help(update, context):
-    print(context.chat_data)
-    update.effective_message.reply_text(
+    update.effective_message.reply_markdown_v2(
         "RSS to Telegram bot" +
         "\n\nAfter successfully adding a RSS link, the bot starts fetching the feed every "
-        + str(delay) + " seconds. (This can be set)" +
+        + str(delay) + " seconds\. \(This can be set\)" +
         "\n\nTitles are used to easily manage RSS feeds and need to contain only one word" +
         "\n\ncommands:" +
         "\n/help Posts this help message" +
-        "\n/add title http://www(.)RSS-URL(.)com" +
-        "\n/remove !Title! removes the RSS link" +
+        "\n/add title http://www\.RSS\-URL\.com" +
+        "\n/remove \!Title\! removes the RSS link" +
         "\n/list Lists all the titles and the RSS links from the DB" +
-        "\n/test Inbuilt command that fetches a post from Reddits RSS." +
-        "\n\nThe current chatId is: " + str(update.message.chat.id))
+        "\n/test Inbuilt command that fetches a post from Reddits RSS\." +
+        "\n\nThe current chatId is: " + str(update.message.chat.id) +
+        "\n\nIf you like the project, star it on [DockerHub](https://hub.docker.com/r/bokker/rss.to.telegram)")
 
 
 def rss_monitor(context):
@@ -145,7 +145,9 @@ def cmd_test(update, context):
     url = "https://www.reddit.com/r/funny/new/.rss"
     rss_d = feedparser.parse(url)
     rss_d.entries[0]['link']
-    update.effective_message.reply_text(rss_d.entries[0]['link'])
+    update.effective_message.reply_text(
+        rss_d.entries[0]['title'] + "\n" +
+        rss_d.entries[0]['link'])
 
 
 def init_sqlite():
