@@ -1,4 +1,4 @@
-![RSSTT](rsstt.png)
+![RSSTT](https://github.com/BoKKeR/RSS-to-Telegram-Bot/raw/master/rsstt.png)
 
 # RSS to Telegram bot
 
