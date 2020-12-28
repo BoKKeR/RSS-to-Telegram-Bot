@@ -145,7 +145,9 @@ def cmd_test(update, context):
     url = "https://www.reddit.com/r/funny/new/.rss"
     rss_d = feedparser.parse(url)
     rss_d.entries[0]['link']
-    update.effective_message.reply_text(rss_d.entries[0]['link'])
+    update.effective_message.reply_text(
+        rss_d.entries[0]['title'] + "\n" +
+        rss_d.entries[0]['link'])
 
 
 def init_sqlite():
