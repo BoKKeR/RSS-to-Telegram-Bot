@@ -4,6 +4,7 @@ import sqlite3
 import os
 from telegram.ext import Updater, CommandHandler
 from pathlib import Path
+from bs4 import BeautifulSoup
 
 Path("config").mkdir(parents=True, exist_ok=True)
 
@@ -138,7 +139,14 @@ def rss_monitor(context):
             conn.commit()
             conn.close()
             rss_load()
-            context.bot.send_message(chatid, rss_d.entries[0]['link'])
+            link = rss_d.entries[0]['link']
+            title = rss_d.entries[0]['title']
+            text = ''
+            if (rss_d.entries[0]['description'] != None):
+                text = BeautifulSoup(rss_d.entries[0]['description']).get_text('\n') + '\n'
+            context.bot.send_message(chatid, '<b>' + title + '</b>' + '\n\n' +
+                    text + '<a href="' + link + '">' + '---&gt;</a>',
+                    parse_mode='HTML')
 
 
 def cmd_test(update, context):
