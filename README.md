@@ -65,7 +65,7 @@ docker create \
   -e DELAY=60 \
   -e TOKEN=InsertToken \
   -e CHATID=InsertChatID \
-  -v /path/to/host/config:/config \
+  -v /path/to/host/config:/app/config \
   --restart unless-stopped \
   bokker/rss.to.telegram
 ```
