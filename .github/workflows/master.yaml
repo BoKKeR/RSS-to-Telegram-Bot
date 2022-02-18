@@ -1,12 +1,12 @@
-name: ci
+name: master
 
 on:
   push:
     branches:
-      - 'develop'
+      - 'master'
 
 jobs:
-  docker:
+  setup:
     runs-on: ubuntu-latest
     steps:
       -
@@ -21,9 +21,8 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Build and push
+      - name: Build and push
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: bokker/rss.to.telegram:develop
+          tags: bokker/rss.to.telegram:latest
