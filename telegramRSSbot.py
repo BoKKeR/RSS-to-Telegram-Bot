@@ -5,21 +5,36 @@ import os
 from telegram.ext import Updater, CommandHandler
 from pathlib import Path
 from bs4 import BeautifulSoup
+import argparse
 
 Path("config").mkdir(parents=True, exist_ok=True)
 
+# Command line arguments
+parser = argparse.ArgumentParser(
+    "Telegram bot token is required. Read the readme")
+
+parser.add_argument(
+    "token", help="Set telegram bot token, bot token is required. Read the readme", type=str)
+parser.add_argument("chatid", help="Set telegram chatid", type=str)
+parser.add_argument("delay", nargs='?', help="Set delay", type=int)
+args = parser.parse_args()
+
 # Docker env
+print(args.token)
+
 if os.environ.get('TOKEN'):
     Token = os.environ['TOKEN']
     chatid = os.environ['CHATID']
     delay = int(os.environ['DELAY'])
 else:
-    Token = "X"
-    chatid = "X"
-    delay = 60
+    Token = args.token
+    chatid = args.chatid
+    if args.token:
+        delay = args.token
 
-if Token == "X":
-    print("Token not set!")
+if Token is None:
+    print("Token not set! Exiting")
+    quit()
 
 rss_dict = {}
 
@@ -143,10 +158,11 @@ def rss_monitor(context):
             title = rss_d.entries[0]['title']
             text = ''
             if (rss_d.entries[0]['description'] != None):
-                text = BeautifulSoup(rss_d.entries[0]['description']).get_text('\n') + '\n'
+                text = BeautifulSoup(
+                    rss_d.entries[0]['description']).get_text('\n') + '\n'
             context.bot.send_message(chatid, '<b>' + title + '</b>' + '\n\n' +
-                    text + '<a href="' + link + '">' + '---&gt;</a>',
-                    parse_mode='HTML')
+                                     text + '<a href="' + link + '">' + '---&gt;</a>',
+                                     parse_mode='HTML')
 
 
 def cmd_test(update, context):

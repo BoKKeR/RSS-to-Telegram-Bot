@@ -15,8 +15,7 @@ For the docker image go to: https://hub.docker.com/r/bokker/rss.to.telegram/
 Python 3.X
 
 ```sh
-pip install feedparser
-pip install python-telegram-bot
+pip install -r requirements.txt
 ```
 
 A telegram bot is needed that the script will connect to. https://botsfortelegram.com/project/the-bot-father/
@@ -41,16 +40,11 @@ send /help to the bot to get this message:
 >
 > commands:
 >
-> **/add** title http://www(.)URL(.)com
->
-> **/help** Shows this text
->
-> **/remove** !Title! removes the RSS link
->
-> **/list** Lists all the titles and the RSS links from the DB
->
-> **/test** Inbuilt command that fetches a post from Reddits RSS.
->
+> **/add** title http://www(.)URL(.)com\
+> **/help** Shows this text\
+> **/remove** !Title! removes the RSS link\
+> **/list** Lists all the titles and the RSS links from the DB\
+> **/test** Inbuilt command that fetches a post from Reddits RSS.\
 > The current chatId is: 20416xxxx
 
 # Known issues
