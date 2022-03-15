@@ -1,18 +1,11 @@
-# Use an official Python runtime as a parent image
-FROM python:3.7-slim
+# Docker Parent Image with Node 
+FROM node:16
 
-# Set the working directory to /app
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+COPY ./package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r /app/requirements.txt
-# Define environment variable
-ENV TOKEN X
-ENV CHATID X
-ENV DELAY 60
-
-# Run app.py when the container launches
-CMD ["python", "telegramRSSbot.py"]
+ENTRYPOINT ["node", "--max_old_space_size=1024", "dist/src/main.js"]
