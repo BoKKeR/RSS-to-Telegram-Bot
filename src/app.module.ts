@@ -3,8 +3,7 @@ import { AppService } from "./app.service";
 import { ConfigModule } from "@nestjs/config";
 import { TelegrafModule } from "nestjs-telegraf";
 import { AppUpdate } from "./app.update";
-
-// TODO: check so the ENV gets loaded from ENV not just .env
+import { PrismaService } from "./prisma.service";
 
 @Module({
   imports: [
@@ -14,6 +13,6 @@ import { AppUpdate } from "./app.update";
     }),
   ],
   controllers: [],
-  providers: [AppService, AppUpdate],
+  providers: [AppService, AppUpdate, PrismaService],
 })
 export class AppModule {}

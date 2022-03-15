@@ -19,9 +19,6 @@ public/css/main.css
 # Coverage reports
 coverage
 
-# API keys and secrets
-.env
-
 # Dependency directory
 node_modules
 bower_components
@@ -39,3 +36,25 @@ dist/**/*
 
 # ignore yarn.lock
 yarn.lock
+
+
+yarn-error.log/
+vendor/
+tmp/
+dist/
+.DS_Store
+.idea
+tmp-resolvers
+package-lock.json
+flow-typed
+yarn.lock
+javascript/**/migrations/
+typescript/**/migrations/
+misc/**/migrations/
+databases/**/migrations/
+experimental/**/*.db
+.next
+.vscode/
+.nuxt
+dev.db
+*.env*

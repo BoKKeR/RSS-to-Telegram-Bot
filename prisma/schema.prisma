@@ -1,0 +1,14 @@
+datasource db {
+  url      = env("DATABASE_URL")
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Rss {
+  last String
+  name String
+  link String @unique
+}
