@@ -3,7 +3,7 @@ import { AppService } from "./app.service";
 import { ConfigModule } from "@nestjs/config";
 import { TelegrafModule } from "nestjs-telegraf";
 import { AppUpdate } from "./app.update";
-import { PrismaService } from "./prisma.service";
+import { RssModule } from "./rss/rss.module";
 
 @Module({
   imports: [
@@ -11,8 +11,9 @@ import { PrismaService } from "./prisma.service";
     TelegrafModule.forRoot({
       token: process.env.TOKEN,
     }),
+    RssModule,
   ],
   controllers: [],
-  providers: [AppService, AppUpdate, PrismaService],
+  providers: [AppService, AppUpdate],
 })
 export class AppModule {}
