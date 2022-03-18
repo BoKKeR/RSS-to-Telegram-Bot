@@ -19,7 +19,7 @@ export class AppUpdate {
     for (let elementIndex = 0; elementIndex < list.length; elementIndex++) {
       const entry = list[elementIndex];
       await ctx.reply(
-        `Title: ${entry.name}\nrss url: ${entry.link}\nlast checked entry: ${entry.last}`
+        `title: ${entry.name}\nrss url: ${entry.link}\nlast checked entry: ${entry.last}`
       );
     }
   }
@@ -48,7 +48,7 @@ export class AppUpdate {
       return;
     }
 
-    let feed = await parser.parseURL("https://www.reddit.com/r/funny/new/.rss");
+    let feed = await parser.parseURL(link);
     const lastItem = feed.items.reverse()[0];
 
     try {
@@ -57,9 +57,7 @@ export class AppUpdate {
         name: name,
         link: link,
       });
-      await ctx.reply(
-        `ADDED: \nRSS: ${lastItem.link}\nTITLE: ${lastItem.text}`
-      );
+      await ctx.reply(`ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}`);
     } catch (error) {
       if (error.code === "P2002") {
         await ctx.reply("ERROR: Duplicate link");
@@ -70,9 +68,8 @@ export class AppUpdate {
   @Command("remove")
   async onRemove(ctx: Context) {
     // @ts-ignore
-    const entries = ctx.update.message.text
-      .replace("/remove", "")
-      .split(" ")[1];
+    const entries = ctx.update.message.text.replace("/remove ", "").split(" ");
+
     if (!entries) {
       await ctx.reply(
         "ERROR: wrong input, correct syntax: \n/remove link_name link_name link_name"
@@ -109,7 +106,6 @@ export class AppUpdate {
   @Help()
   async help(ctx: Context) {
     try {
-      await ctx.replyWithMarkdown(delay.toString());
       await ctx.replyWithMarkdown(
         "RSS to Telegram bot v" +
           process.env.npm_package_version +
@@ -127,7 +123,7 @@ export class AppUpdate {
           chatid +
           "\n\nIf you like the project, ⭐ it on [DockerHub](https://hub.docker.com/r/bokker/rss.to.telegram) / [GitHub](https://www.github.com/BoKKeR/RSS-to-Telegram-Bot)",
         {
-          disable_web_page_preview: true,
+          disable_web_page_preview: false,
         }
       );
     } catch (error) {
