@@ -27,19 +27,33 @@ export class AppUpdate {
 
     let parser = new Parser();
 
-    if (link) {
-      let feed = await parser.parseURL("https://www.reddit.com/.rss");
-      feed.items.forEach((item) => {
-        console.log(item.title + ":" + item.link);
-      });
+    if (!link || link === "invalid") {
+      await ctx.reply(
+        "Error: something with the link? format: /add link_name rss_link_url"
+      );
+      return;
     }
 
-    await this.rssService.createUser({
-      last: " idk",
-      name: name,
-      link: link,
-    });
-    await ctx.reply("added");
+    let feed = await parser.parseURL("https://www.reddit.com/r/funny/new/.rss");
+    const lastItem = feed.items.reverse()[0];
+
+    try {
+      await this.rssService.createUser({
+        last: lastItem.link,
+        name: name,
+        link: link,
+      });
+      await ctx.reply(`added link to database as: **${name}** 
+
+Last item link+title:
+link: ${lastItem.link}
+text: ${lastItem.text}
+      `);
+    } catch (error) {
+      if (error.code === "P2002") {
+        await ctx.reply("Error: Duplicate link");
+      }
+    }
   }
 
   @Command("remove")
@@ -49,9 +63,7 @@ export class AppUpdate {
   async onTest(ctx: Context) {
     let parser = new Parser();
     let feed = await parser.parseURL("https://www.reddit.com/r/funny/new/.rss");
-    feed.items.forEach((item) => {
-      console.log(item.title + ":" + item.link);
-    });
+
     const lastItem = feed.items.reverse()[0];
 
     await ctx.reply(lastItem.link);
