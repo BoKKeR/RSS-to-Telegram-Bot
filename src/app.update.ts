@@ -12,7 +12,7 @@ export class AppUpdate {
 
   @Command("list")
   async startCommand(ctx: Context) {
-    const list = await this.rssService.users({});
+    const list = await this.rssService.feeds({});
 
     if (list.length === 0) {
       await ctx.reply("The database is empty");
@@ -54,7 +54,7 @@ export class AppUpdate {
       let feed = await parser.parseURL(link);
       const lastItem = feed.items.reverse()[0];
 
-      await this.rssService.createUser({
+      await this.rssService.createFeed({
         last: lastItem.link,
         name: name,
         link: link,
@@ -89,7 +89,7 @@ export class AppUpdate {
       for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
         const element = entries[entryIndex];
 
-        await this.rssService.deleteUser({ name: element });
+        await this.rssService.deleteFeed({ name: element });
         await ctx.reply("REMOVED: " + element);
       }
     } catch (error) {

@@ -16,7 +16,7 @@ export class RssService {
     });
   }
 
-  async users(params: {
+  async feeds(params: {
     skip?: number;
     take?: number;
     cursor?: Prisma.RssWhereUniqueInput;
@@ -33,13 +33,13 @@ export class RssService {
     });
   }
 
-  async createUser(data: Prisma.RssCreateInput): Promise<Rss> {
+  async createFeed(data: Prisma.RssCreateInput): Promise<Rss> {
     return this.prisma.rss.create({
       data,
     });
   }
 
-  async updateUser(params: {
+  async updateFeed(params: {
     where: Prisma.RssWhereUniqueInput;
     data: Prisma.RssUpdateInput;
   }): Promise<Rss> {
@@ -50,7 +50,7 @@ export class RssService {
     });
   }
 
-  async deleteUser(where: Prisma.RssWhereUniqueInput): Promise<Rss> {
+  async deleteFeed(where: Prisma.RssWhereUniqueInput): Promise<Rss> {
     return this.prisma.rss.delete({
       where,
     });
