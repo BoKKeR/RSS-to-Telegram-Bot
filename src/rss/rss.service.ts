@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { Rss, Prisma } from "@prisma/client";
+import { Interval } from "@nestjs/schedule";
+import { delay } from "src/util/config";
 
 @Injectable()
 export class RssService {
@@ -52,5 +54,10 @@ export class RssService {
     return this.prisma.rss.delete({
       where,
     });
+  }
+
+  @Interval(delay * 1000)
+  handleInterval() {
+    console.log("here");
   }
 }

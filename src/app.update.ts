@@ -21,8 +21,9 @@ export class AppUpdate {
 
     for (let elementIndex = 0; elementIndex < list.length; elementIndex++) {
       const entry = list[elementIndex];
-      await ctx.reply(
-        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}`
+      await ctx.replyWithMarkdown(
+        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}`,
+        { disable_web_page_preview: true }
       );
     }
   }
