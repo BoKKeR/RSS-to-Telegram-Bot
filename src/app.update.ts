@@ -45,7 +45,7 @@ export class AppUpdate {
 
     if (!link || link === "invalid") {
       await ctx.reply(
-        "ERROR: something with the link? correct syntax: \n/add link_name rss_link_url"
+        "ERROR: something with the link? correct syntax: \n/add title_name rss_link_url"
       );
       return;
     }
@@ -53,6 +53,15 @@ export class AppUpdate {
     try {
       let feed = await parser.parseURL(link);
       const lastItem = feed.items.reverse()[0];
+
+      const duplicateCheck = await this.rssService.feeds({
+        where: { link: link },
+      });
+
+      if (duplicateCheck.length !== 0) {
+        await ctx.reply("DUPLICATE: duplicate link");
+        return;
+      }
 
       await this.rssService.createFeed({
         last: lastItem.link,
@@ -74,10 +83,14 @@ export class AppUpdate {
     }
   }
 
+  @Command("delete")
   @Command("remove")
   async onRemove(ctx: Context) {
     // @ts-ignore
-    const entries = ctx.update.message.text.replace("/remove ", "").split(" ");
+    const entries = ctx.update.message.text
+      .replace("/remove ", "")
+      .replace("/delete ", "")
+      .split(" ");
 
     if (!entries) {
       await ctx.reply(
