@@ -2,7 +2,10 @@ import { Update, Help, Command } from "nestjs-telegraf";
 import { Context } from "./context.interface";
 import { RssService } from "./rss/rss.service";
 import { chatid, delay } from "./util/config";
+
 let Parser = require("rss-parser");
+let parser = new Parser();
+
 @Update()
 export class AppUpdate {
   constructor(private rssService: RssService) {}
@@ -19,7 +22,7 @@ export class AppUpdate {
     for (let elementIndex = 0; elementIndex < list.length; elementIndex++) {
       const entry = list[elementIndex];
       await ctx.reply(
-        `title: ${entry.name}\nrss url: ${entry.link}\nlast checked entry: ${entry.last}`
+        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}`
       );
     }
   }
@@ -39,8 +42,6 @@ export class AppUpdate {
     const name = text.split(" ")[1];
     const link = text.split(" ")[2];
 
-    let parser = new Parser();
-
     if (!link || link === "invalid") {
       await ctx.reply(
         "ERROR: something with the link? correct syntax: \n/add link_name rss_link_url"
@@ -48,10 +49,10 @@ export class AppUpdate {
       return;
     }
 
-    let feed = await parser.parseURL(link);
-    const lastItem = feed.items.reverse()[0];
-
     try {
+      let feed = await parser.parseURL(link);
+      const lastItem = feed.items.reverse()[0];
+
       await this.rssService.createUser({
         last: lastItem.link,
         name: name,
@@ -60,7 +61,14 @@ export class AppUpdate {
       await ctx.reply(`ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}`);
     } catch (error) {
       if (error.code === "P2002") {
-        await ctx.reply("ERROR: Duplicate link");
+        await ctx.reply("ERROR: Duplicate title");
+      } else if ((error.code = "ECONNREFUSED")) {
+        await ctx.replyWithMarkdown(
+          "ERROR: connection refused/not valid RSS link\nif you think this is a mistake [open an issue](https://github.com/BoKKeR/RSS-to-Telegram-Bot/issues) with the given link",
+          { disable_web_page_preview: true }
+        );
+      } else {
+        await ctx.reply(error);
       }
     }
   }
@@ -107,9 +115,9 @@ export class AppUpdate {
   async help(ctx: Context) {
     try {
       await ctx.replyWithMarkdown(
-        "RSS to Telegram bot v" +
+        "RSS to Telegram bot *v" +
           process.env.npm_package_version +
-          "\n\nAfter successfully adding a RSS link, the bot starts fetching the feed *every " +
+          "\n\n*After successfully adding a RSS link, the bot starts fetching the feed *every " +
           delay +
           " seconds*. (This can be changed)" +
           "\n\nTitles are used to easily manage RSS feeds and need to contain only one word" +
@@ -119,7 +127,7 @@ export class AppUpdate {
           "\n`/remove link_name` removes the RSS link, multiple links can be removed with one command" +
           "\n`/list` Lists all the titles and the RSS links from the DB" +
           "\n`/test` Inbuilt command that fetches a post from Reddits RSS." +
-          "\n\nThe current set chatId is: " +
+          "\n\nThe current chatId is: " +
           chatid +
           "\n\nIf you like the project, ⭐ it on [DockerHub](https://hub.docker.com/r/bokker/rss.to.telegram) / [GitHub](https://www.github.com/BoKKeR/RSS-to-Telegram-Bot)",
         {
