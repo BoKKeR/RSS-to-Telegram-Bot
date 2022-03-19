@@ -15,13 +15,13 @@ export class AppUpdate {
     const list = await this.rssService.feeds({});
 
     if (list.length === 0) {
-      await ctx.reply("The database is empty");
+      await ctx.reply("ERROR: The database is empty");
       return;
     }
 
     for (let elementIndex = 0; elementIndex < list.length; elementIndex++) {
       const entry = list[elementIndex];
-      await ctx.replyWithMarkdown(
+      await ctx.reply(
         `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}`,
         { disable_web_page_preview: true }
       );
@@ -68,7 +68,9 @@ export class AppUpdate {
         name: name,
         link: link,
       });
-      await ctx.reply(`ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}`);
+      await ctx.reply(`ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}`, {
+        disable_web_page_preview: true,
+      });
     } catch (error) {
       if (error.code === "P2002") {
         await ctx.reply("ERROR: Duplicate title");
@@ -120,7 +122,7 @@ export class AppUpdate {
     let parser = new Parser();
     let feed = await parser.parseURL("https://www.reddit.com/r/funny/new/.rss");
 
-    const lastItem = feed.items.reverse()[0];
+    const lastItem = feed.items[0];
 
     await ctx.reply(lastItem.link);
   }
