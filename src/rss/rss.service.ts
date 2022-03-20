@@ -71,8 +71,8 @@ export class RssService {
       return;
     }
 
-    for (let itemIndex = 0; itemIndex < feeds.length; itemIndex++) {
-      const element = feeds[itemIndex];
+    for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
+      const element = feeds[feedIndex];
       let feedReq = await getFeedData(element.link);
 
       // @ts-ignore
@@ -80,34 +80,22 @@ export class RssService {
 
       const feedItems = feed.items;
 
-      // 0 is the last item!
       const lastItem = feedItems[0];
       if (lastItem.link !== element.last) {
         const findSavedItemIndex =
           feedItems.findIndex((item) => item.link === element.last) !== -1
             ? feedItems.findIndex((item) => item.link === element.last) - 1
-            : 1;
+            : feedItems.length - 1;
 
-        for (
-          let itemIndex = findSavedItemIndex;
-          itemIndex < feedItems.length;
-          itemIndex++
-        ) {
+        for (let itemIndex = findSavedItemIndex; itemIndex > -1; itemIndex--) {
           const gapElement = feedItems[itemIndex];
-          if (
-            // fix this OR part, make some test cases
-            itemIndex != feedItems.length - 1 &&
-            gapElement.link !== element.last &&
-            gapElement.link !== lastItem.link
-          ) {
-            await this.telegramService.sendRss(gapElement.link);
-          } else {
-            await this.telegramService.sendRss(lastItem.link);
+          await this.telegramService.sendRss(gapElement.link);
+
+          if (itemIndex === 0) {
             await this.updateFeed({
               where: { name: element.name },
               data: { last: lastItem.link },
             });
-            return;
           }
         }
       }

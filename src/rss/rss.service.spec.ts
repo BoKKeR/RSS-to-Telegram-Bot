@@ -145,6 +145,7 @@ describe("RssService", () => {
       expect(telegramService.sendRss).toBeCalledTimes(3);
       expect(axios.get).toBeCalledTimes(1);
       expect(axios.get).toBeCalledWith(db_result[0].link);
+      expect(telegramService.sendRss).not.toBeCalledWith(db_result[0].last);
 
       expect(service.updateFeed).toBeCalledWith({
         where: { name: db_result[0].name },
@@ -152,7 +153,7 @@ describe("RssService", () => {
       });
     });
 
-    it("should update and send 2 posts", async () => {
+    it("should update and send 5 posts", async () => {
       const db_result = [
         {
           link: "idk",
@@ -175,7 +176,7 @@ describe("RssService", () => {
       jest.spyOn(service, "updateFeed");
 
       await service.handleInterval();
-      expect(telegramService.sendRss).toBeCalledTimes(3);
+      expect(telegramService.sendRss).toBeCalledTimes(5);
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
@@ -260,6 +261,7 @@ describe("RssService", () => {
 
       expect(telegramService.sendRss).toBeCalledTimes(6);
       expect(axios.get).toBeCalledWith(db_result[0].link);
+
       expect(service.updateFeed).toBeCalledWith({
         where: { name: db_result[0].name },
         data: { last: mockFeed.items[0].link },
@@ -294,8 +296,7 @@ describe("RssService", () => {
 
       await service.handleInterval();
 
-      // it should probably be called twice but we use the same link in the test
-      expect(axios.get).toBeCalledTimes(1);
+      expect(axios.get).toBeCalledTimes(2);
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({

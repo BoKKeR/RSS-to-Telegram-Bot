@@ -2,7 +2,7 @@
 
 # RSS to Telegram bot
 
-A self-hosted telegram python bot that dumps posts from RSS feeds to a telegram chat. This script was created because all the third party services were unreliable.
+A self-hosted telegram JavaScript/TypeScript bot that dumps posts from RSS feeds to a telegram chat. This script was created because all the third party services were unreliable.
 
 ![Image of help menu](https://bokker.github.io/telegram.png)
 
@@ -12,12 +12,15 @@ For the docker image go to: https://hub.docker.com/r/bokker/rss.to.telegram/
 
 ### Installation
 
-Python 3.X
+Dont forget to use the right node version. `nvm use` or match the version in `.nvmrc`
 
 ```sh
-pip install feedparser
-pip install python-telegram-bot
+npm install
+cp .env.example .env
+npm run dev
 ```
+
+Dont forget to fill the .env file
 
 A telegram bot is needed that the script will connect to. https://botsfortelegram.com/project/the-bot-father/
 Running the script and typing in /help will reveal the current chatId, this needs to be set also in the script
@@ -55,7 +58,7 @@ send /help to the bot to get this message:
 
 # Known issues
 
-If the bot is set to for example 5 minutes and one feed manages to get 2 new posts before the bot can check. Only the newest post will show up on telegram.
+There are no known issues.
 
 # Docker
 

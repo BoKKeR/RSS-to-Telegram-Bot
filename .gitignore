@@ -57,4 +57,7 @@ experimental/**/*.db
 .vscode/
 .nuxt
 dev.db
-*.env*
+*.env
+*.env.production
+*.env.staging
+*.env.local
