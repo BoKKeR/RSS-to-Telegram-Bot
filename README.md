@@ -4,7 +4,7 @@
 
 A self-hosted telegram JavaScript/TypeScript bot that dumps posts from RSS feeds to a telegram chat. This script was created because all the third party services were unreliable.
 
-![Image of help menu](https://bokker.github.io/telegram.png)
+![Image of help menu](https://bokker.github.io/telegram.jpg)
 
 ### Docker
 
