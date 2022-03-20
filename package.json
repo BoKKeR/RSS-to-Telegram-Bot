@@ -27,6 +27,7 @@
     "@nestjs/platform-express": "^8.1.1",
     "@nestjs/schedule": "^1.0.2",
     "@prisma/client": "^3.11.0",
+    "axios": "^0.26.1",
     "nestjs-telegraf": "^2.4.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

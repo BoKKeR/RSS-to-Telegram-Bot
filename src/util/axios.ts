@@ -4,7 +4,5 @@ export const axiosInstance = axios.create();
 
 export const getFeedData = async (url: string): Promise<AxiosResponse<any>> => {
   const { data } = await axios.get(url);
-  console.log("callling");
-
   return data;
 };

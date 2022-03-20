@@ -3,6 +3,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { PrismaService } from "../prisma.service";
 import * as Parser from "rss-parser";
 import axios from "axios";
+import { TelegramService } from "../telegram/telegram.service";
 
 jest.mock("axios");
 jest.mock("rss-parser", () => {
@@ -92,14 +93,25 @@ jest.mock("rss-parser", () => {
 describe("RssService", () => {
   let service: RssService;
   let prisma: PrismaService;
+  let telegramService: TelegramService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RssService, PrismaService],
+      providers: [
+        RssService,
+        PrismaService,
+        {
+          provide: TelegramService,
+          useValue: {
+            sendRss: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<RssService>(RssService);
     prisma = module.get<PrismaService>(PrismaService);
+    telegramService = module.get<TelegramService>(TelegramService);
 
     jest.clearAllMocks();
   });
@@ -113,6 +125,7 @@ describe("RssService", () => {
           last: "https://www.reddit.com/r/funny/3/",
         },
       ];
+
       // need to do this as I cant hoist any variables on the top of the file
       const mockFeed = await new Parser().parseString("");
 
@@ -120,14 +133,16 @@ describe("RssService", () => {
       prisma.rss.update = jest.fn();
 
       // @ts-ignore
-      axios.get.mockResolvedValueOnce(db_result);
+      axios.get.mockResolvedValue(db_result);
 
+      jest.spyOn(telegramService, "sendRss");
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
 
       await service.handleInterval();
 
+      expect(telegramService.sendRss).toBeCalledTimes(3);
       expect(axios.get).toBeCalledTimes(1);
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
@@ -152,14 +167,15 @@ describe("RssService", () => {
       prisma.rss.update = jest.fn();
 
       // @ts-ignore
-      axios.get.mockResolvedValueOnce(db_result);
+      axios.get.mockResolvedValue(db_result);
 
+      jest.spyOn(telegramService, "sendRss");
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
 
       await service.handleInterval();
-
+      expect(telegramService.sendRss).toBeCalledTimes(3);
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
@@ -175,15 +191,19 @@ describe("RssService", () => {
       prisma.rss.update = jest.fn();
 
       // @ts-ignore
-      axios.get.mockResolvedValueOnce(db_result);
+      axios.get.mockResolvedValue(db_result);
 
       const parser = new Parser();
+      jest.spyOn(telegramService, "sendRss");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
       jest.spyOn(parser, "parseString");
+      jest.spyOn(axios, "get");
 
       await service.handleInterval();
 
+      expect(telegramService.sendRss).toBeCalledTimes(0);
+      expect(axios.get).toBeCalledTimes(0);
       expect(service.updateFeed).toBeCalledTimes(0);
       expect(parser.parseString).toBeCalledTimes(0);
     });
@@ -201,11 +221,12 @@ describe("RssService", () => {
       prisma.rss.update = jest.fn();
 
       // @ts-ignore
-      axios.get.mockResolvedValueOnce(db_result);
+      axios.get.mockResolvedValue(db_result);
 
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
+      jest.spyOn(telegramService, "sendRss");
 
       await service.handleInterval();
 
@@ -228,14 +249,16 @@ describe("RssService", () => {
       prisma.rss.update = jest.fn();
 
       // @ts-ignore
-      axios.get.mockResolvedValueOnce(db_result);
+      axios.get.mockResolvedValue(db_result);
 
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
+      jest.spyOn(telegramService, "sendRss");
 
       await service.handleInterval();
 
+      expect(telegramService.sendRss).toBeCalledTimes(6);
       expect(axios.get).toBeCalledWith(db_result[0].link);
       expect(service.updateFeed).toBeCalledWith({
         where: { name: db_result[0].name },
@@ -263,7 +286,7 @@ describe("RssService", () => {
       prisma.rss.update = jest.fn();
 
       // @ts-ignore
-      axios.get.mockResolvedValueOnce(db_result);
+      axios.get.mockResolvedValue(db_result);
 
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");

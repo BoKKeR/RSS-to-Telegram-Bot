@@ -3,14 +3,17 @@ import { PrismaService } from "../prisma.service";
 import { Rss, Prisma } from "@prisma/client";
 import { Interval } from "@nestjs/schedule";
 import { delay } from "../util/config";
-
 import * as Parser from "rss-parser";
 import { getFeedData } from "../util/axios";
+import { TelegramService } from "../telegram/telegram.service";
+
 let parser = new Parser();
-import * as fs from "fs";
 @Injectable()
 export class RssService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private telegramService: TelegramService
+  ) {}
 
   async feed(
     userWhereUniqueInput: Prisma.RssWhereUniqueInput
@@ -70,8 +73,9 @@ export class RssService {
 
     for (let itemIndex = 0; itemIndex < feeds.length; itemIndex++) {
       const element = feeds[itemIndex];
-      let feedReq = getFeedData(element.link).toString();
+      let feedReq = await getFeedData(element.link);
 
+      // @ts-ignore
       let feed = await parser.parseString(feedReq);
 
       const feedItems = feed.items;
@@ -82,7 +86,7 @@ export class RssService {
         const findSavedItemIndex =
           feedItems.findIndex((item) => item.link === element.last) !== -1
             ? feedItems.findIndex((item) => item.link === element.last) - 1
-            : 0;
+            : 1;
 
         for (
           let itemIndex = findSavedItemIndex;
@@ -96,9 +100,9 @@ export class RssService {
             gapElement.link !== element.last &&
             gapElement.link !== lastItem.link
           ) {
-            console.log("found: " + gapElement.link);
+            await this.telegramService.sendRss(gapElement.link);
           } else {
-            console.log("done itterating, writing " + lastItem.link);
+            await this.telegramService.sendRss(lastItem.link);
             await this.updateFeed({
               where: { name: element.name },
               data: { last: lastItem.link },
@@ -106,8 +110,6 @@ export class RssService {
             return;
           }
         }
-      } else {
-        console.log("no_new_items");
       }
     }
   }
