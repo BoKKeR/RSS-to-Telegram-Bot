@@ -54,7 +54,7 @@ commands:
 The current chatId is: 2032xxxx
 
 ```
-**
+
 # Known issues
 
 There are no known issues.
