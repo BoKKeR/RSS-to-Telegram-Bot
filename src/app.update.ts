@@ -52,7 +52,7 @@ export class AppUpdate {
 
     try {
       let feed = await parser.parseURL(link);
-      const lastItem = feed.items.reverse()[0];
+      const lastItem = feed.items[0];
 
       const duplicateCheck = await this.rssService.feeds({
         where: { link: link },

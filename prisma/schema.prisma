@@ -9,6 +9,12 @@ generator client {
 
 model Rss {
   last String
-  name String
-  link String @unique
+  name String @unique
+  link String
+}
+
+model Version {
+  version     String   @unique
+  description String
+  date        DateTime
 }
