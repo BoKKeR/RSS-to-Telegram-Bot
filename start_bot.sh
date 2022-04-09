@@ -9,7 +9,7 @@ JS_DATABASE=config/rss_bot_database.db
 PRISMA=./node_modules/.bin/prisma
 
 if test -f "$PYTHON_LEGACY_DATABASE"; then
-    echo "$PYTHON_LEGACY_DATABASE exists backing up as backup_python_rss.db"
+    echo "INFO: Old database exists:$PYTHON_LEGACY_DATABASE, backing it up as backup_python_rss.db"
     
     cp $PYTHON_LEGACY_DATABASE $PYTHON_LEGACY_DATABASE_BACKUP
     
@@ -20,6 +20,6 @@ if test -f "$PYTHON_LEGACY_DATABASE"; then
 fi
 
 
-$PRISMA db migrate deploy
+$PRISMA migrate deploy
 
 node --max_old_space_size=1024 dist/main.js
