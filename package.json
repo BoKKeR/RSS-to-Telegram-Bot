@@ -1,8 +1,8 @@
 {
-  "name": "nest-typescript-starter",
+  "name": "rss-to-telegram-bot",
   "private": true,
   "version": "2.0.0",
-  "description": "Nest TypeScript starter repository",
+  "description": "Open source JS RSS-to-telegram bot",
   "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
