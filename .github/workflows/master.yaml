@@ -9,11 +9,15 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
-    
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
       - name: get-npm-version
         id: package-version
         uses: martinbeentjes/npm-get-version-action@master
-
+      - name: npm-release
+        run: npx release-it --ci --dry-run
+      
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
