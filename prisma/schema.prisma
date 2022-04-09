@@ -1,20 +1,15 @@
-datasource db {
-  url      = env("DATABASE_URL")
-  provider = "sqlite"
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-model Rss {
-  last String
-  name String @unique
-  link String
+datasource db {
+  provider = "sqlite"
+  url      = "file:./../config/rss_bot_database.db"
 }
 
-model Version {
-  version     String   @unique
-  description String
-  date        DateTime
+model rss {
+  id   Int    @id @unique(map: "sqlite_autoindex_rss_1") @default(autoincrement())
+  link String
+  last String
+  name String
 }

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
-import { Rss, Prisma } from "@prisma/client";
+import { rss, Prisma } from "@prisma/client";
 import { Interval } from "@nestjs/schedule";
 import { delay } from "../util/config";
 import * as Parser from "rss-parser";
@@ -16,50 +16,50 @@ export class RssService {
   ) {}
 
   async feed(
-    userWhereUniqueInput: Prisma.RssWhereUniqueInput
-  ): Promise<Rss | null> {
+    userWhereUniqueInput: Prisma.rssWhereUniqueInput
+  ): Promise<rss | null> {
     return this.prisma.rss.findUnique({
-      where: userWhereUniqueInput,
+      where: userWhereUniqueInput
     });
   }
 
   async feeds(params: {
     skip?: number;
     take?: number;
-    cursor?: Prisma.RssWhereUniqueInput;
-    where?: Prisma.RssWhereInput;
-    orderBy?: Prisma.RssOrderByWithRelationInput;
-  }): Promise<Rss[]> {
+    cursor?: Prisma.rssWhereUniqueInput;
+    where?: Prisma.rssWhereInput;
+    orderBy?: Prisma.rssOrderByWithRelationInput;
+  }): Promise<rss[]> {
     const { skip, take, cursor, where, orderBy } = params;
     return this.prisma.rss.findMany({
       skip,
       take,
       cursor,
       where,
-      orderBy,
+      orderBy
     });
   }
 
-  async createFeed(data: Prisma.RssCreateInput): Promise<Rss> {
+  async createFeed(data: Prisma.rssCreateInput): Promise<rss> {
     return this.prisma.rss.create({
-      data,
+      data
     });
   }
 
   async updateFeed(params: {
-    where: Prisma.RssWhereUniqueInput;
-    data: Prisma.RssUpdateInput;
-  }): Promise<Rss> {
+    where: Prisma.rssWhereUniqueInput;
+    data: Prisma.rssUpdateInput;
+  }): Promise<rss> {
     const { where, data } = params;
     return this.prisma.rss.update({
       data,
-      where,
+      where
     });
   }
 
-  async deleteFeed(where: Prisma.RssWhereUniqueInput): Promise<Rss> {
+  async deleteFeed(where: Prisma.rssWhereUniqueInput): Promise<rss> {
     return this.prisma.rss.delete({
-      where,
+      where
     });
   }
 
@@ -94,7 +94,7 @@ export class RssService {
           if (itemIndex === 0) {
             await this.updateFeed({
               where: { name: element.name },
-              data: { last: lastItem.link },
+              data: { last: lastItem.link }
             });
           }
         }
