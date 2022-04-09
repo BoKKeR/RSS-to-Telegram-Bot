@@ -6,14 +6,18 @@ import { delay } from "../util/config";
 import * as Parser from "rss-parser";
 import { getFeedData } from "../util/axios";
 import { TelegramService } from "../telegram/telegram.service";
+import { CustomLoggerService } from "../logger/logger.service";
 
 let parser = new Parser();
 @Injectable()
 export class RssService {
   constructor(
     private prisma: PrismaService,
-    private telegramService: TelegramService
-  ) {}
+    private telegramService: TelegramService,
+    private logger: CustomLoggerService
+  ) {
+    this.logger.setContext("RssService");
+  }
 
   async feed(
     userWhereUniqueInput: Prisma.rssWhereUniqueInput

@@ -4,6 +4,7 @@ import { PrismaService } from "../prisma.service";
 import * as Parser from "rss-parser";
 import axios from "axios";
 import { TelegramService } from "../telegram/telegram.service";
+import { CustomLoggerService } from "../logger/logger.service";
 
 jest.mock("axios");
 jest.mock("rss-parser", () => {
@@ -21,7 +22,7 @@ jest.mock("rss-parser", () => {
             contentSnippet:
               "submitted by    /u/Pathosx  \n [link]   [comments]",
             id: "t3_thzedr",
-            isoDate: "2022-03-19T16:52:39.000Z",
+            isoDate: "2022-03-19T16:52:39.000Z"
           },
           {
             title: "People on r/WouldYouRather finding loopholes",
@@ -33,7 +34,7 @@ jest.mock("rss-parser", () => {
             contentSnippet:
               "submitted by    /u/Bledalot  \n [link]   [comments]",
             id: "t3_thza2s",
-            isoDate: "2022-03-19T16:47:06.000Z",
+            isoDate: "2022-03-19T16:47:06.000Z"
           },
           {
             title:
@@ -46,7 +47,7 @@ jest.mock("rss-parser", () => {
             contentSnippet:
               "submitted by    /u/SligPants  \n [link]   [comments]",
             id: "t3_thz8uq",
-            isoDate: "2022-03-19T16:45:34.000Z",
+            isoDate: "2022-03-19T16:45:34.000Z"
           },
           {
             title: "...and you thought smoking at the pump was risky stuff 😂",
@@ -58,7 +59,7 @@ jest.mock("rss-parser", () => {
             contentSnippet:
               "submitted by    /u/iBrake4NoReason  \n [link]   [comments]",
             id: "t3_thz7ry",
-            isoDate: "2022-03-19T16:44:13.000Z",
+            isoDate: "2022-03-19T16:44:13.000Z"
           },
           {
             title: "Cops in Alaska are in on the joke.",
@@ -70,7 +71,7 @@ jest.mock("rss-parser", () => {
             contentSnippet:
               "submitted by    /u/MulletCamaro  \n [link]   [comments]",
             id: "t3_thz6y8",
-            isoDate: "2022-03-19T16:43:07.000Z",
+            isoDate: "2022-03-19T16:43:07.000Z"
           },
           {
             title: "Look out, Norway!",
@@ -82,10 +83,10 @@ jest.mock("rss-parser", () => {
             contentSnippet:
               "submitted by    /u/ajbenson  \n [link]   [comments]",
             id: "t3_thz3dh",
-            isoDate: "2022-03-19T16:38:34.000Z",
-          },
-        ],
-      }),
+            isoDate: "2022-03-19T16:38:34.000Z"
+          }
+        ]
+      })
     };
   });
 });
@@ -94,6 +95,7 @@ describe("RssService", () => {
   let service: RssService;
   let prisma: PrismaService;
   let telegramService: TelegramService;
+  let loggerService: CustomLoggerService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -103,15 +105,23 @@ describe("RssService", () => {
         {
           provide: TelegramService,
           useValue: {
-            sendRss: jest.fn(),
-          },
+            sendRss: jest.fn()
+          }
         },
-      ],
+        {
+          provide: CustomLoggerService,
+          useValue: {
+            setContext: jest.fn(),
+            warn: console.log
+          }
+        }
+      ]
     }).compile();
 
     service = module.get<RssService>(RssService);
     prisma = module.get<PrismaService>(PrismaService);
     telegramService = module.get<TelegramService>(TelegramService);
+    loggerService = module.get<CustomLoggerService>(CustomLoggerService);
 
     jest.clearAllMocks();
   });
@@ -122,8 +132,8 @@ describe("RssService", () => {
         {
           link: "idk",
           name: "test",
-          last: "https://www.reddit.com/r/funny/3/",
-        },
+          last: "https://www.reddit.com/r/funny/3/"
+        }
       ];
 
       // need to do this as I cant hoist any variables on the top of the file
@@ -149,7 +159,7 @@ describe("RssService", () => {
 
       expect(service.updateFeed).toBeCalledWith({
         where: { name: db_result[0].name },
-        data: { last: mockFeed.items[0].link },
+        data: { last: mockFeed.items[0].link }
       });
     });
 
@@ -158,8 +168,8 @@ describe("RssService", () => {
         {
           link: "idk",
           name: "test",
-          last: "https://www.reddit.com/r/funny/1/",
-        },
+          last: "https://www.reddit.com/r/funny/1/"
+        }
       ];
       // need to do this as I cant hoist any variables on the top of the file
       const mockFeed = await new Parser().parseString("");
@@ -181,7 +191,7 @@ describe("RssService", () => {
 
       expect(service.updateFeed).toBeCalledWith({
         where: { name: db_result[0].name },
-        data: { last: mockFeed.items[0].link },
+        data: { last: mockFeed.items[0].link }
       });
     });
 
@@ -214,8 +224,8 @@ describe("RssService", () => {
         {
           link: "idk",
           name: "test",
-          last: "https://www.reddit.com/r/funny/6/",
-        },
+          last: "https://www.reddit.com/r/funny/6/"
+        }
       ];
 
       prisma.rss.findMany = jest.fn().mockReturnValue(db_result);
@@ -240,8 +250,8 @@ describe("RssService", () => {
         {
           link: "idk",
           name: "test",
-          last: "https://www.reddit.com/r/funny/10/",
-        },
+          last: "https://www.reddit.com/r/funny/10/"
+        }
       ];
       // need to do this as I cant hoist any variables on the top of the file
       const mockFeed = await new Parser().parseString("");
@@ -264,7 +274,7 @@ describe("RssService", () => {
 
       expect(service.updateFeed).toBeCalledWith({
         where: { name: db_result[0].name },
-        data: { last: mockFeed.items[0].link },
+        data: { last: mockFeed.items[0].link }
       });
     });
 
@@ -273,13 +283,13 @@ describe("RssService", () => {
         {
           link: "idk",
           name: "test",
-          last: "https://www.reddit.com/r/funny/3/",
+          last: "https://www.reddit.com/r/funny/3/"
         },
         {
           link: "idk",
           name: "test",
-          last: "https://www.reddit.com/r/funny/3/",
-        },
+          last: "https://www.reddit.com/r/funny/3/"
+        }
       ];
       // need to do this as I cant hoist any variables on the top of the file
       const mockFeed = await new Parser().parseString("");
@@ -301,11 +311,11 @@ describe("RssService", () => {
 
       expect(service.updateFeed).toBeCalledWith({
         where: { name: db_result[0].name },
-        data: { last: mockFeed.items[0].link },
+        data: { last: mockFeed.items[0].link }
       });
       expect(service.updateFeed).toBeCalledWith({
         where: { name: db_result[1].name },
-        data: { last: mockFeed.items[0].link },
+        data: { last: mockFeed.items[0].link }
       });
     });
   });
