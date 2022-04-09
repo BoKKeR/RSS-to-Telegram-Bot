@@ -9,7 +9,7 @@ datasource db {
 
 model rss {
   id   Int    @id @unique(map: "sqlite_autoindex_rss_1") @default(autoincrement())
-  link String
+  link String @unique(map: "sqlite_autoindex_rss_2")
   last String
-  name String
+  name String @unique(map: "sqlite_autoindex_rss_3")
 }
