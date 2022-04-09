@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { PrismaService } from "./prisma.service";
 import * as fs from "fs";
+import { logLevel } from "./util/config";
 
 async function bootstrap() {
   const conf_dir = "./config";
@@ -10,17 +11,9 @@ async function bootstrap() {
     if (err) throw err;
   });
 
-  const logDebug = process.env.DEBUG === "true";
-
-  const logLevels = ["error", "warn"];
-
-  if (logDebug) {
-    logLevels.push("debug");
-  }
-
   // @ts-ignore
   const app = await NestFactory.create(AppModule, {
-    logger: logLevels
+    logger: logLevel
   });
 
   const prismaService: PrismaService = app.get(PrismaService);

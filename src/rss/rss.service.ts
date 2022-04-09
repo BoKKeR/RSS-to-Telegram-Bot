@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { rss, Prisma } from "@prisma/client";
 import { Interval } from "@nestjs/schedule";
-import { delay } from "../util/config";
+import { chatid, delay } from "../util/config";
 import * as Parser from "rss-parser";
 import { getFeedData } from "../util/axios";
 import { TelegramService } from "../telegram/telegram.service";
@@ -17,6 +17,8 @@ export class RssService {
     private logger: CustomLoggerService
   ) {
     this.logger.setContext("RssService");
+    this.logger.debug("DELAY: " + delay + " seconds");
+    this.logger.debug("CHATID: " + chatid);
   }
 
   async feed(

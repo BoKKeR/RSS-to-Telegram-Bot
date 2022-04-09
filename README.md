@@ -70,6 +70,7 @@ docker create \
   --name=rss.to.telegram \
   -e DELAY=60 \
   -e TOKEN=InsertToken \
+  -e DEBUG=true \
   -e CHATID=InsertChatID \
   -v /path/to/host/config:/app/config \
   --restart unless-stopped \
