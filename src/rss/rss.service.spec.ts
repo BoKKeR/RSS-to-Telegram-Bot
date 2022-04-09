@@ -112,8 +112,9 @@ describe("RssService", () => {
           provide: CustomLoggerService,
           useValue: {
             setContext: jest.fn(),
-            warn: console.log,
-            verbose: jest.fn()
+            warn: jest.fn(),
+            verbose: jest.fn(),
+            debug: jest.fn()
           }
         }
       ]

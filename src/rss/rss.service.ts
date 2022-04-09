@@ -85,33 +85,31 @@ export class RssService {
       const feedItems = feed.items;
 
       const lastItem = feedItems[0];
-      this.logger.verbose(
-        `\n\n-------checking feed: ${element.name}----------`
-      );
-      this.logger.verbose("last item: " + lastItem.link);
+      this.logger.debug(`\n\n-------checking feed: ${element.name}----------`);
+      this.logger.debug("last item: " + lastItem.link);
       if (lastItem.link !== element.last) {
         const findSavedItemIndex =
           feedItems.findIndex((item) => item.link === element.last) !== -1
             ? feedItems.findIndex((item) => item.link === element.last) - 1
             : feedItems.length - 1;
-        this.logger.verbose("new elements: " + (findSavedItemIndex + 1));
+        this.logger.debug("new elements: " + (findSavedItemIndex + 1));
 
         for (let itemIndex = findSavedItemIndex; itemIndex > -1; itemIndex--) {
           const gapElement = feedItems[itemIndex];
-          this.logger.verbose("sending: " + gapElement.link);
+          this.logger.debug("sending: " + gapElement.link);
           await this.telegramService.sendRss(gapElement.link);
 
           if (itemIndex === 0) {
-            this.logger.verbose("saving: " + lastItem.link);
+            this.logger.debug("saving: " + lastItem.link);
             await this.updateFeed({
               where: { name: element.name },
               data: { last: lastItem.link }
             });
-            this.logger.verbose("done-saving: " + lastItem.link);
+            this.logger.debug("done-saving: " + lastItem.link);
           }
         }
       }
-      console.log("-------------done------------------");
+      this.logger.debug("-------------done------------------");
     }
   }
 }

@@ -10,12 +10,12 @@ async function bootstrap() {
     if (err) throw err;
   });
 
-  const showVerbose = process.env.VERBOSE === "true";
+  const logDebug = process.env.DEBUG === "true";
 
   const logLevels = ["error", "warn"];
 
-  if (showVerbose) {
-    logLevels.push("verbose");
+  if (logDebug) {
+    logLevels.push("debug");
   }
 
   // @ts-ignore
