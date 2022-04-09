@@ -10,7 +10,18 @@ async function bootstrap() {
     if (err) throw err;
   });
 
-  const app = await NestFactory.create(AppModule);
+  const showVerbose = process.env.VERBOSE === "true";
+
+  const logLevels = ["error", "warn"];
+
+  if (showVerbose) {
+    logLevels.push("verbose");
+  }
+
+  // @ts-ignore
+  const app = await NestFactory.create(AppModule, {
+    logger: logLevels
+  });
 
   const prismaService: PrismaService = app.get(PrismaService);
   prismaService.enableShutdownHooks(app);
