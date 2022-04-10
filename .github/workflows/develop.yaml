@@ -34,6 +34,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo ${{ steps.package-version.outputs.current-version}}
       
       - name: Build and push
         uses: docker/build-push-action@v2
