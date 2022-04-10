@@ -21,6 +21,7 @@ jobs:
       - run: npm install
       - run: npm test
       - run: node node_modules/.bin/release-it --ci --preRelease=alpha
+     
       - name: get-npm-version
         id: package-version
         uses: martinbeentjes/npm-get-version-action@master
