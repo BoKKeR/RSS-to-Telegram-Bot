@@ -11,7 +11,6 @@ jobs:
     steps:
     
       - uses: actions/checkout@v3
-      - uses: martinbeentjes/npm-get-version-action@master
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
@@ -20,6 +19,7 @@ jobs:
       - run: npm test
       - run: node node_modules/.bin/release-it --ci --dry-run --preRelease=alpha
 
+      - uses: martinbeentjes/npm-get-version-action@master
       - name: get-npm-version
         id: package-version
       
