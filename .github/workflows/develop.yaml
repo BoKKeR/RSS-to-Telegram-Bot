@@ -34,6 +34,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+      - uses: actions/github-script@v6
+        id: set-result
+        with:
+          script: return "Hello!"
+          result-encoding: string
+      - name: Get result
         run: echo ${{ steps.package-version.outputs.current-version}}
       
       - name: Build and push
