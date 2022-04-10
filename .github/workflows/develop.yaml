@@ -39,4 +39,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: bokker/rss.to.telegram:develop bokker/rss.to.telegram:${{ steps.package-version.outputs.current-version}}
+          tags: bokker/rss.to.telegram:develop bokker/rss.to.telegram:${{ steps.package-version.outputs.current-version}}-alpha
