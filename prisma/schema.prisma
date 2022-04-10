@@ -8,8 +8,18 @@ datasource db {
 }
 
 model rss {
-  id   Int    @id @unique(map: "sqlite_autoindex_rss_1") @default(autoincrement())
-  link String @unique(map: "sqlite_autoindex_rss_2")
-  last String
-  name String @unique(map: "sqlite_autoindex_rss_3")
+  id      Int    @id @unique(map: "sqlite_autoindex_rss_1") @default(autoincrement())
+  link    String @unique(map: "sqlite_autoindex_rss_2")
+  last    String
+  name    String @unique(map: "sqlite_autoindex_rss_3")
+  chat_id String @unique()
+}
+
+model setting {
+  id             Int     @id @unique() @default(autoincrement())
+  show_changelog Boolean @default(true)
+  last_version   String
+  chat_id        String  @unique()
+  delay          Int     @unique()
+  multichat_mode Boolean @default(false)
 }
