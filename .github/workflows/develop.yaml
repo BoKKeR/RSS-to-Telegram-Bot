@@ -9,7 +9,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     env:
-      RUNNER_GITHUB_TOKEN: ${{secrets.RUNNER_GITHUB_TOKEN}} 
+      GITHUB_TOKEN: ${{secrets.RUNNER_GITHUB_TOKEN}} 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
