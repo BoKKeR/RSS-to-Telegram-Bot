@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '16.x'
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}} 
+          RUNNER_GITHUB_TOKEN: ${{secrets.RUNNER_GITHUB_TOKEN}} 
       - run: |
             git config --global user.email "bokker11@hotmail.com"
             git config --global user.name "Norbert Takács"

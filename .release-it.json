@@ -1,7 +1,8 @@
 {
   "git": {
     "commitMessage": "chore: release v${version}",
-    "tag": true
+    "tag": true,
+    "tokenRef": "RUNNER_GITHUB_TOKEN"
   },
   "github": {
     "release": true,
