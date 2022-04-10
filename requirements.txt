@@ -1,3 +1,0 @@
-feedparser
-python-telegram-bot
-beautifulsoup4
