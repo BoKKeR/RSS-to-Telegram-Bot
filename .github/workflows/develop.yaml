@@ -17,7 +17,7 @@ jobs:
       
       - run: npm install
       - run: npm test
-      - run: node node_modules/.bin/release-it --ci --dry-run --preRelease=alpha
+      - run: node node_modules/.bin/release-it --ci --preRelease=alpha
 
       - name: get-npm-version
         id: package-version
