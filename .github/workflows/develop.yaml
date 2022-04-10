@@ -34,17 +34,9 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-        
-      - uses: actions/github-script@v6
-        id: set-result
-        with:
-          script: return "Hello!"
-          result-encoding: string
-      - name: Get result
-        run: echo ${{ steps.package-version.outputs.current-version}}
-      
+             
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: bokker/rss.to.telegram:develop bokker/rss.to.telegram:${{ steps.package-version.outputs.current-version}}-alpha
+          tags: bokker/rss.to.telegram:develop,bokker/rss.to.telegram:${{ steps.package-version.outputs.current-version}}-alpha
