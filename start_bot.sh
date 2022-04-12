@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 
 PYTHON_LEGACY_DATABASE=config/rss.db

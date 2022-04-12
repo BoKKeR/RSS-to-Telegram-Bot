@@ -3,7 +3,7 @@
 
 
 
-![Docker Pulls](https://img.shields.io/docker/pulls/bokker/rss.to.telegram) ![Docker Stars](https://img.shields.io/docker/stars/bokker/rss.to.telegram) ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/BoKKeR/RSS-to-telegram-Bot/master/master)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/bokker/rss-to-telegram-bot?label=release) ![Docker Pulls](https://img.shields.io/docker/pulls/bokker/rss.to.telegram) ![Docker Stars](https://img.shields.io/docker/stars/bokker/rss.to.telegram) ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/BoKKeR/RSS-to-telegram-Bot/master/master) ![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/bokker/rss.to.telegram) 
 # RSS to Telegram bot
 
 A self-hosted telegram JavaScript/TypeScript bot that dumps posts from RSS feeds to a telegram chat. This script was created because all the third party services were unreliable.
