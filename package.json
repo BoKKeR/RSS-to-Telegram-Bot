@@ -1,7 +1,7 @@
 {
   "name": "rss-to-telegram-bot",
   "private": true,
-  "version": "2.0.2",
+  "version": "2.0.3-alpha.0",
   "description": "Open source JS RSS-to-telegram bot",
   "license": "MIT",
   "scripts": {
