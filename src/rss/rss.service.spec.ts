@@ -132,6 +132,7 @@ describe("RssService", () => {
     it("should update and send 3 posts", async () => {
       const db_result = [
         {
+          id: 1,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/3/"
@@ -160,7 +161,7 @@ describe("RssService", () => {
       expect(telegramService.sendRss).not.toBeCalledWith(db_result[0].last);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[0].name },
+        where: { id: db_result[0].id },
         data: { last: mockFeed.items[0].link }
       });
     });
@@ -168,6 +169,7 @@ describe("RssService", () => {
     it("should update and send 5 posts", async () => {
       const db_result = [
         {
+          id: 1,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/1/"
@@ -192,7 +194,7 @@ describe("RssService", () => {
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[0].name },
+        where: { id: db_result[0].id },
         data: { last: mockFeed.items[0].link }
       });
     });
@@ -250,6 +252,7 @@ describe("RssService", () => {
     it("new posts, but database post cant be found within them", async () => {
       const db_result = [
         {
+          id: 1,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/10/"
@@ -275,7 +278,7 @@ describe("RssService", () => {
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[0].name },
+        where: { id: db_result[0].id },
         data: { last: mockFeed.items[0].link }
       });
     });
@@ -283,11 +286,13 @@ describe("RssService", () => {
     it("update 2 different hosts and send 3 posts each", async () => {
       const db_result = [
         {
+          id: 1,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/3/"
         },
         {
+          id: 2,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/3/"
@@ -312,11 +317,11 @@ describe("RssService", () => {
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[0].name },
+        where: { id: db_result[0].id },
         data: { last: mockFeed.items[0].link }
       });
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[1].name },
+        where: { id: db_result[1].id },
         data: { last: mockFeed.items[0].link }
       });
     });
