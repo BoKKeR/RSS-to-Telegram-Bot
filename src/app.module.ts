@@ -5,17 +5,19 @@ import { TelegrafModule } from "nestjs-telegraf";
 import { AppUpdate } from "./app.update";
 import { RssModule } from "./rss/rss.module";
 import { ScheduleModule } from "@nestjs/schedule";
+import { SettingModule } from "./setting/setting.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     ScheduleModule.forRoot(),
     TelegrafModule.forRoot({
-      token: process.env.TOKEN,
+      token: process.env.TOKEN
     }),
     RssModule,
+    SettingModule
   ],
   controllers: [],
-  providers: [AppService, AppUpdate],
+  providers: [AppService, AppUpdate]
 })
 export class AppModule {}

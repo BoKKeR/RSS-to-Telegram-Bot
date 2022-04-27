@@ -1,18 +1,34 @@
-import { Update, Help, Command } from "nestjs-telegraf";
+import { Update, Help, Command, Start } from "nestjs-telegraf";
 import { Context } from "./context.interface";
 import { RssService } from "./rss/rss.service";
-import { chatid, delay } from "./util/config";
+import { SettingService } from "./setting/setting.service";
+import { delay } from "./util/config";
 
 let Parser = require("rss-parser");
 let parser = new Parser();
 
 @Update()
 export class AppUpdate {
-  constructor(private rssService: RssService) {}
+  constructor(
+    private rssService: RssService,
+    private settingService: SettingService
+  ) {}
+
+  getMessage(ctx: Context) {
+    // @ts-ignore
+    return ctx.update.message.text;
+  }
+  getFromChatId(ctx: Context) {
+    return ctx.message.chat.id;
+  }
 
   @Command("list")
   async startCommand(ctx: Context) {
-    const list = await this.rssService.feeds({});
+    await this.initializeSettings(ctx);
+
+    const fromId = this.getFromChatId(ctx);
+
+    const list = await this.rssService.feeds({ where: { chat_id: fromId } });
 
     if (list.length === 0) {
       await ctx.reply("ERROR: The database is empty");
@@ -30,8 +46,10 @@ export class AppUpdate {
 
   @Command("add")
   async onAdd(ctx: Context) {
-    // @ts-ignore
-    const text = ctx.update.message.text;
+    await this.initializeSettings(ctx);
+
+    const text = this.getMessage(ctx);
+    const fromId = this.getFromChatId(ctx);
 
     if (!text || text.split(" ").length === 2) {
       await ctx.reply(
@@ -55,7 +73,7 @@ export class AppUpdate {
       const lastItem = feed.items[0];
 
       const duplicateCheck = await this.rssService.feeds({
-        where: { link: link },
+        where: { link: link, chat_id: fromId }
       });
 
       if (duplicateCheck.length !== 0) {
@@ -67,9 +85,10 @@ export class AppUpdate {
         last: lastItem.link,
         name: name,
         link: link,
+        chat_id: fromId
       });
       await ctx.reply(`ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}`, {
-        disable_web_page_preview: true,
+        disable_web_page_preview: true
       });
     } catch (error) {
       if (error.code === "P2002") {
@@ -88,8 +107,10 @@ export class AppUpdate {
   @Command("delete")
   @Command("remove")
   async onRemove(ctx: Context) {
-    // @ts-ignore
-    const entries = ctx.update.message.text
+    await this.initializeSettings(ctx);
+
+    const fromId = this.getFromChatId(ctx);
+    const entries = this.getMessage(ctx)
       .replace("/remove ", "")
       .replace("/delete ", "")
       .split(" ");
@@ -103,8 +124,7 @@ export class AppUpdate {
     try {
       for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
         const element = entries[entryIndex];
-
-        await this.rssService.deleteFeed({ name: element });
+        await this.rssService.deleteFeed(fromId, element);
         await ctx.reply("REMOVED: " + element);
       }
     } catch (error) {
@@ -119,6 +139,8 @@ export class AppUpdate {
 
   @Command("test")
   async onTest(ctx: Context) {
+    await this.initializeSettings(ctx);
+
     let parser = new Parser();
     let feed = await parser.parseURL("https://www.reddit.com/r/funny/new/.rss");
 
@@ -127,29 +149,86 @@ export class AppUpdate {
     await ctx.reply(lastItem.link);
   }
 
+  @Command("settings")
+  @Command("setting")
+  async onSettings(ctx: Context) {
+    await this.initializeSettings(ctx);
+
+    const fromId = this.getFromChatId(ctx);
+    let setting = await this.settingService.getSettingByChatId(fromId);
+
+    // @ts-ignore
+    const entries = ctx.update.message.text.split(" ");
+
+    if (entries.length > 2) {
+      return await ctx.replyWithMarkdown("ERROR: wrong syntax");
+    }
+
+    if (entries.length === 2 && entries[1].split("=").length === 2) {
+      const [key, value] = entries[1].split("=");
+      if (key === "delay" && typeof parseInt(value) === "number") {
+        if (parseInt(value) >= 60) {
+          await this.settingService.updateSetting({
+            where: { chat_id: fromId },
+            data: { [key]: parseInt(value) }
+          });
+        } else {
+          ctx.reply("ERROR: delay must be at least 60 seconds");
+          return;
+        }
+      }
+      if (key === "show_changelog" && (value === "true" || value === "false")) {
+        await this.settingService.updateSetting({
+          where: { chat_id: fromId },
+          data: { [key]: value === "true" ? true : false }
+        });
+      }
+
+      setting = await this.settingService.getSettingByChatId(fromId);
+    }
+    const msg =
+      "*Settings*\n\nto change a setting use te following syntax:\n*/settings name=value* \n\nCurrent settings:" +
+      "\n\ndelay=" +
+      setting.delay +
+      "\nshow_changelog=" +
+      setting.show_changelog;
+
+    await ctx.replyWithMarkdown(msg.replaceAll("_", "\\_"));
+  }
+
+  async initializeSettings(ctx: Context) {
+    const chatId = this.getFromChatId(ctx);
+    await this.settingService.intializeTable(chatId);
+  }
+
+  @Start()
   @Help()
   async help(ctx: Context) {
+    await this.initializeSettings(ctx);
+
+    const msg =
+      "RSS to Telegram bot *v" +
+      process.env.npm_package_version +
+      "\n\n*After successfully adding a RSS link, the bot starts fetching the feed *every " +
+      delay +
+      " seconds*. (This can be changed)" +
+      "\n\nTitles are used to easily manage RSS feeds and need to contain only one word" +
+      "\n\ncommands:" +
+      "\n*/help* shows this help message" +
+      "\n*/add title http://www.RSS-URL.com*" +
+      " to add a new link" +
+      "\n*/remove link_name removes* the RSS link, multiple links can be removed with one command" +
+      "\n*/list* Lists all the titles and the RSS links from the DB" +
+      "\n*/settings* Lists all the settings and allows you to change them" +
+      "\n*/test* Inbuilt command that fetches a post from Reddits RSS." +
+      "\n\nThe current chatId is: *" +
+      ctx.message.chat.id +
+      "\n\n*If you like the project, ⭐ it on [DockerHub](https://hub.docker.com/r/bokker/rss.to.telegram) / [GitHub](https://www.github.com/BoKKeR/RSS-to-Telegram-Bot)";
+
     try {
-      await ctx.replyWithMarkdown(
-        "RSS to Telegram bot *v" +
-          process.env.npm_package_version +
-          "\n\n*After successfully adding a RSS link, the bot starts fetching the feed *every " +
-          delay +
-          " seconds*. (This can be changed)" +
-          "\n\nTitles are used to easily manage RSS feeds and need to contain only one word" +
-          "\n\ncommands:" +
-          "\n`/help` shows this help message" +
-          "\n`/add title http://www.RSS-URL.com`" +
-          "\n`/remove link_name` removes the RSS link, multiple links can be removed with one command" +
-          "\n`/list` Lists all the titles and the RSS links from the DB" +
-          "\n`/test` Inbuilt command that fetches a post from Reddits RSS." +
-          "\n\nThe current chatId is: " +
-          chatid +
-          "\n\nIf you like the project, ⭐ it on [DockerHub](https://hub.docker.com/r/bokker/rss.to.telegram) / [GitHub](https://www.github.com/BoKKeR/RSS-to-Telegram-Bot)",
-        {
-          disable_web_page_preview: false,
-        }
-      );
+      await ctx.replyWithMarkdown(msg.replaceAll("_", "\\_"), {
+        disable_web_page_preview: false
+      });
     } catch (error) {
       await ctx.replyWithMarkdown("ERROR: " + error);
     }

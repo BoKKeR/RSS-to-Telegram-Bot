@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { setting, Prisma } from "@prisma/client";
-import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
+import { delay } from "src/util/config";
 
 @Injectable()
 export class SettingService {
@@ -10,7 +10,8 @@ export class SettingService {
     private prisma: PrismaService,
     private logger: CustomLoggerService
   ) {
-    this.intializeTable();
+    this.logger.setContext("SettingService");
+    this.settingsChangelog();
   }
 
   async getSetting(
@@ -18,6 +19,12 @@ export class SettingService {
   ): Promise<setting | null> {
     return this.prisma.setting.findUnique({
       where: userWhereUniqueInput
+    });
+  }
+
+  async getSettingByChatId(chatId: number): Promise<setting | null> {
+    return this.prisma.setting.findUnique({
+      where: { chat_id: chatId }
     });
   }
 
@@ -61,9 +68,39 @@ export class SettingService {
     });
   }
 
-  async intializeTable() {
+  async settingsChangelog() {
+    const chatSettings = await this.getSettings({});
+    for (
+      let chatSettingIndex = 0;
+      chatSettingIndex < chatSettings.length;
+      chatSettingIndex++
+    ) {
+      const chatSetting = chatSettings[chatSettingIndex];
+
+      if (chatSetting.last_version !== process.env.npm_package_version) {
+        if (chatSetting.show_changelog) {
+          // send changelog
+        }
+        chatSetting.last_version = process.env.npm_package_version;
+      }
+    }
+  }
+
+  async intializeTable(chatId: number) {
+    const chatSetting = await this.getSettingByChatId(chatId);
+    this.logger.debug("INITIALIZE SETTINGS");
+
+    if (!chatSetting) {
+      this.logger.debug("settings not found");
+      return await this.createSetting({
+        chat_id: chatId,
+        show_changelog: true,
+        last_version: process.env.npm_package_version,
+        delay: delay
+      });
+    }
+
     // CHAT_ID
     // CHANGELOG
-    // COMMAND TO CHANGE SETTINGS
   }
 }

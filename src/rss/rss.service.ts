@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { rss, Prisma } from "@prisma/client";
 import { Interval } from "@nestjs/schedule";
-import { chatid, delay } from "../util/config";
+import { delay } from "../util/config";
 import * as Parser from "rss-parser";
 import { getFeedData } from "../util/axios";
 import { TelegramService } from "../telegram/telegram.service";
@@ -18,7 +18,6 @@ export class RssService {
   ) {
     this.logger.setContext("RssService");
     this.logger.debug("DELAY: " + delay + " seconds");
-    this.logger.debug("CHATID: " + chatid);
   }
 
   async feed(
@@ -63,7 +62,20 @@ export class RssService {
     });
   }
 
-  async deleteFeed(where: Prisma.rssWhereUniqueInput): Promise<rss> {
+  async deleteFeed(chatId: number, name: string): Promise<rss> {
+    const result = await this.prisma.rss.findFirst({
+      where: {
+        chat_id: chatId,
+        name: name
+      }
+    });
+
+    if (result) {
+      return await this.prisma.rss.delete({ where: { id: result.id } });
+    }
+  }
+
+  async deleteOne(where: Prisma.rssWhereUniqueInput): Promise<rss> {
     return this.prisma.rss.delete({
       where
     });
@@ -99,12 +111,13 @@ export class RssService {
         for (let itemIndex = findSavedItemIndex; itemIndex > -1; itemIndex--) {
           const gapElement = feedItems[itemIndex];
           this.logger.debug("sending: " + gapElement.link);
-          await this.telegramService.sendRss(gapElement.link);
+          await this.telegramService.sendRss(element.chat_id, gapElement.link);
 
           if (itemIndex === 0) {
             this.logger.debug("saving: " + lastItem.link);
+
             await this.updateFeed({
-              where: { name: element.name },
+              where: { id: element.id },
               data: { last: lastItem.link }
             });
             this.logger.debug("done-saving: " + lastItem.link);
