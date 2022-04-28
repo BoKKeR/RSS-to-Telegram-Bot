@@ -125,6 +125,8 @@ describe("RssService", () => {
     telegramService = module.get<TelegramService>(TelegramService);
     loggerService = module.get<CustomLoggerService>(CustomLoggerService);
 
+    service.sleep = jest.fn();
+
     jest.clearAllMocks();
   });
 

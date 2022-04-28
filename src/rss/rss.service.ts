@@ -81,6 +81,10 @@ export class RssService {
     });
   }
 
+  async sleep() {
+    await new Promise((resolve) => setTimeout(resolve, 3500));
+  }
+
   @Interval(delay * 1000)
   async handleInterval() {
     const feeds = await this.feeds({});
@@ -112,7 +116,7 @@ export class RssService {
           const gapElement = feedItems[itemIndex];
           this.logger.debug("sending: " + gapElement.link);
           await this.telegramService.sendRss(element.chat_id, gapElement.link);
-
+          await this.sleep(); // sleep to prevent overloading the api
           if (itemIndex === 0) {
             this.logger.debug("saving: " + lastItem.link);
 
