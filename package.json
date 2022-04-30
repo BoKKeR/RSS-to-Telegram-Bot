@@ -6,6 +6,8 @@
   "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
+    "postbuild": "npm run copy-files",
+    "copy-files": "copyfiles -u 1 src/doc/**/*.md dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -28,6 +30,7 @@
     "@nestjs/schedule": "^1.0.2",
     "@prisma/client": "^3.11.0",
     "axios": "^0.26.1",
+    "copyfiles": "^2.4.1",
     "nestjs-telegraf": "^2.4.0",
     "reflect-metadata": "^0.1.13",
     "release-it": "^14.14.1",

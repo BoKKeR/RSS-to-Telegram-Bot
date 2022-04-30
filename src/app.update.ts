@@ -3,6 +3,7 @@ import { Context } from "./context.interface";
 import { RssService } from "./rss/rss.service";
 import { SettingService } from "./setting/setting.service";
 import { delay } from "./util/config";
+import mdLoader from "./util/mdLoader";
 
 let Parser = require("rss-parser");
 let parser = new Parser();
@@ -206,6 +207,8 @@ export class AppUpdate {
   async help(ctx: Context) {
     await this.initializeSettings(ctx);
 
+    const helpMarkdown = await mdLoader("help");
+
     const msg =
       "RSS to Telegram bot *v" +
       process.env.npm_package_version +
@@ -226,7 +229,7 @@ export class AppUpdate {
       "\n\n*If you like the project, ⭐ it on [DockerHub](https://hub.docker.com/r/bokker/rss.to.telegram) / [GitHub](https://www.github.com/BoKKeR/RSS-to-Telegram-Bot)";
 
     try {
-      await ctx.replyWithMarkdown(msg.replaceAll("_", "\\_"), {
+      await ctx.replyWithMarkdown(helpMarkdown, {
         disable_web_page_preview: false
       });
     } catch (error) {

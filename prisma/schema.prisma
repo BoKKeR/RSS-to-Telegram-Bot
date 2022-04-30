@@ -12,7 +12,7 @@ model rss {
   link    String
   last    String
   name    String
-  chat_id Int    @unique()
+  chat_id Int
 }
 
 model setting {
