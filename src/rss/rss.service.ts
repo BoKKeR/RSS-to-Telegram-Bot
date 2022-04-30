@@ -46,6 +46,10 @@ export class RssService {
     });
   }
 
+  async findFirst(params: { where?: Prisma.rssWhereInput }) {
+    return await this.prisma.rss.findFirst(params);
+  }
+
   async createFeed(data: Prisma.rssCreateInput): Promise<rss> {
     return this.prisma.rss.create({
       data
