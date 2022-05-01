@@ -9,7 +9,7 @@
 A self-hosted telegram JavaScript/TypeScript bot that dumps posts from RSS feeds to a telegram chat. 
 This script was created because all the third party services were unreliable.
 
-![Image of help menu](https://bokker.github.io/telegram.png)
+![help](img/help.png)
 
 ### Docker
 
@@ -28,21 +28,15 @@ npm run dev
 Dont forget to fill the .env file
 
 A telegram bot is needed that the script will connect to. https://botsfortelegram.com/project/the-bot-father/
-Running the script and typing in /help will reveal the current chatId, this needs to be set also in the script
+Running the script and typing in /help will reveal all the commands
 
 1. Clone the script
 2. Save and run
 3. Use the telegram commands to manage feeds
 
-# Usage
-
-send /help to the bot to get the following message: 
-
-![help](img/help.png)
-
 # Known issues
 
-There are no known issues.
+There are no known issues but the telegram API has limitations on how many messages per chat you can receive
 
 # Docker
 
