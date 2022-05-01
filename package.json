@@ -30,8 +30,10 @@
     "@nestjs/schedule": "^1.0.2",
     "@prisma/client": "^3.11.0",
     "axios": "^0.26.1",
+    "carbon-now-cli": "^1.4.0",
     "copyfiles": "^2.4.1",
     "nestjs-telegraf": "^2.4.0",
+    "pre-push": "^0.1.2",
     "reflect-metadata": "^0.1.13",
     "release-it": "^14.14.1",
     "rimraf": "^3.0.2",
@@ -80,5 +82,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  }
+  },
+  "pre-push": [
+    "lint"
+  ]
 }

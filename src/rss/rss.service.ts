@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { rss, Prisma } from "@prisma/client";
 import { Interval } from "@nestjs/schedule";
-import { delay } from "../util/config";
+import { chatid, delay } from "../util/config";
 import * as Parser from "rss-parser";
 import { getFeedData } from "../util/axios";
 import { TelegramService } from "../telegram/telegram.service";
@@ -18,6 +18,7 @@ export class RssService {
   ) {
     this.logger.setContext("RssService");
     this.logger.debug("DELAY: " + delay + " seconds");
+    this.migrateToMultiChat();
   }
 
   async feed(
@@ -94,8 +95,8 @@ export class RssService {
     }
 
     for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
-      const element = feeds[feedIndex];
-      let feedReq = await getFeedData(element.link);
+      const currentFeed = feeds[feedIndex];
+      let feedReq = await getFeedData(currentFeed.link);
 
       // @ts-ignore
       let feed = await parser.parseString(feedReq);
@@ -103,32 +104,61 @@ export class RssService {
       const feedItems = feed.items;
 
       const lastItem = feedItems[0];
-      this.logger.debug(`\n\n-------checking feed: ${element.name}----------`);
+      this.logger.debug(
+        `\n\n-------checking feed: ${currentFeed.name}----------`
+      );
       this.logger.debug("last item: " + lastItem.link);
-      if (lastItem.link !== element.last) {
+      if (lastItem.link !== currentFeed.last) {
         const findSavedItemIndex =
-          feedItems.findIndex((item) => item.link === element.last) !== -1
-            ? feedItems.findIndex((item) => item.link === element.last) - 1
+          feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
+            ? feedItems.findIndex((item) => item.link === currentFeed.last) - 1
             : feedItems.length - 1;
         this.logger.debug("new elements: " + (findSavedItemIndex + 1));
 
         for (let itemIndex = findSavedItemIndex; itemIndex > -1; itemIndex--) {
           const gapElement = feedItems[itemIndex];
           this.logger.debug("sending: " + gapElement.link);
-          await this.telegramService.sendRss(element.chat_id, gapElement.link);
-          await this.sleep(); // sleep to prevent overloading the api
+          await this.telegramService.sendRss(
+            currentFeed.chat_id,
+            gapElement.link
+          );
           if (itemIndex === 0) {
             this.logger.debug("saving: " + lastItem.link);
 
             await this.updateFeed({
-              where: { id: element.id },
+              where: { id: currentFeed.id },
               data: { last: lastItem.link }
             });
             this.logger.debug("done-saving: " + lastItem.link);
+          } else {
+            this.logger.debug("sleep");
+            await this.sleep(); // sleep to prevent overloading the api
           }
         }
       }
       this.logger.debug("-------------done------------------");
+    }
+  }
+
+  async migrateToMultiChat() {
+    this.logger.debug("migrate to multichat started");
+    const feeds = await this.feeds({});
+    for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
+      const feed = feeds[feedIndex];
+
+      if (feed.chat_id === 0 && chatid) {
+        this.logger.debug("feed for migration found");
+        try {
+          await this.updateFeed({
+            where: { id: feed.id },
+            data: { chat_id: chatid }
+          });
+          this.logger.debug("feed saved");
+        } catch (error) {
+          this.logger.debug("error saving migration");
+          this.logger.debug(JSON.stringify(error));
+        }
+      }
     }
   }
 }

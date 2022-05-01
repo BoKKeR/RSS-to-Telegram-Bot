@@ -207,26 +207,9 @@ export class AppUpdate {
   async help(ctx: Context) {
     await this.initializeSettings(ctx);
 
-    const helpMarkdown = await mdLoader("help");
-
-    const msg =
-      "RSS to Telegram bot *v" +
-      process.env.npm_package_version +
-      "\n\n*After successfully adding a RSS link, the bot starts fetching the feed *every " +
-      delay +
-      " seconds*. (This can be changed)" +
-      "\n\nTitles are used to easily manage RSS feeds and need to contain only one word" +
-      "\n\ncommands:" +
-      "\n*/help* shows this help message" +
-      "\n*/add title http://www.RSS-URL.com*" +
-      " to add a new link" +
-      "\n*/remove link_name removes* the RSS link, multiple links can be removed with one command" +
-      "\n*/list* Lists all the titles and the RSS links from the DB" +
-      "\n*/settings* Lists all the settings and allows you to change them" +
-      "\n*/test* Inbuilt command that fetches a post from Reddits RSS." +
-      "\n\nThe current chatId is: *" +
-      ctx.message.chat.id +
-      "\n\n*If you like the project, ⭐ it on [DockerHub](https://hub.docker.com/r/bokker/rss.to.telegram) / [GitHub](https://www.github.com/BoKKeR/RSS-to-Telegram-Bot)";
+    const helpMarkdown = (await mdLoader("help"))
+      .replace("CHATID_PLACEHOLDER", ctx.message.chat.id)
+      .replace("VERSION_PLACEHOLDER", process.env.npm_package_version);
 
     try {
       await ctx.replyWithMarkdown(helpMarkdown, {

@@ -6,7 +6,8 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/bokker/rss.to.telegram) ![Docker Stars](https://img.shields.io/docker/stars/bokker/rss.to.telegram) ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/BoKKeR/RSS-to-telegram-Bot/master/master)
 # RSS to Telegram bot
 
-A self-hosted telegram JavaScript/TypeScript bot that dumps posts from RSS feeds to a telegram chat. This script was created because all the third party services were unreliable.
+A self-hosted telegram JavaScript/TypeScript bot that dumps posts from RSS feeds to a telegram chat. 
+This script was created because all the third party services were unreliable.
 
 ![Image of help menu](https://bokker.github.io/telegram.png)
 
@@ -30,16 +31,12 @@ A telegram bot is needed that the script will connect to. https://botsfortelegra
 Running the script and typing in /help will reveal the current chatId, this needs to be set also in the script
 
 1. Clone the script
-2. Replace your chatID and Token on the top of the script.
-3. Edit the delay. (seconds)
-4. Save and run
-5. Use the telegram commands to manage feeds
-
-Warning! Without chatID the bot wont be able to send automated messages and will only be able to respond to messages.
+2. Save and run
+3. Use the telegram commands to manage feeds
 
 # Usage
 
-send /help to the bot to get this message:
+send /help to the bot to get this message: 
 
 ```
 RSS to Telegram bot v2.0.0
@@ -68,10 +65,8 @@ There are no known issues.
 ```
 docker create \
   --name=rss.to.telegram \
-  -e DELAY=60 \
   -e TOKEN=InsertToken \
-  -e DEBUG=true \
-  -e CHATID=InsertChatID \
+  -e DEBUG=false \
   -v /path/to/host/config:/app/config \
   --restart unless-stopped \
   bokker/rss.to.telegram
