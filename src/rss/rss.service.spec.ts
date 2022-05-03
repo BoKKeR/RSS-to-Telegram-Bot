@@ -127,6 +127,8 @@ describe("RssService", () => {
 
     service.sleep = jest.fn();
 
+    service.migrateToMultiChat = jest.fn();
+
     jest.clearAllMocks();
   });
 
