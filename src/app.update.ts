@@ -73,12 +73,18 @@ export class AppUpdate {
       let feed = await parser.parseURL(link);
       const lastItem = feed.items[0];
 
-      const duplicateCheck = await this.rssService.feeds({
+      const duplicateCheck = await this.rssService.findFirst({
         where: { link: link, chat_id: fromId }
       });
 
-      if (duplicateCheck.length !== 0) {
-        await ctx.reply("DUPLICATE: duplicate link");
+      if (duplicateCheck) {
+        if (duplicateCheck.link === link) {
+          await ctx.reply("DUPLICATE: duplicate link");
+        }
+        if (duplicateCheck.name === name) {
+          await ctx.reply("DUPLICATE: duplicate title");
+        }
+
         return;
       }
 
@@ -93,7 +99,10 @@ export class AppUpdate {
       });
     } catch (error) {
       if (error.code === "P2002") {
-        await ctx.reply("ERROR: Duplicate title");
+        await ctx.reply(
+          "ERROR: Duplicate problem when saving with: " +
+            JSON.stringify(error.meta.target)
+        );
       } else if ((error.code = "ECONNREFUSED")) {
         await ctx.replyWithMarkdown(
           "ERROR: connection refused/not valid RSS link\nif you think this is a mistake [open an issue](https://github.com/BoKKeR/RSS-to-Telegram-Bot/issues) with the given link",

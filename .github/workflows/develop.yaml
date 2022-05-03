@@ -20,7 +20,7 @@ jobs:
             git config --global user.name "Norbert Takács"
       - run: npm install
       - run: npm test
-      - run: node node_modules/.bin/release-it --ci --preRelease=alpha
+      # - run: node node_modules/.bin/release-it --ci --preRelease=alpha
      
       - name: get-npm-version
         id: package-version
