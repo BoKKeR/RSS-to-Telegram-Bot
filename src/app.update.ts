@@ -2,7 +2,6 @@ import { Update, Help, Command, Start } from "nestjs-telegraf";
 import { Context } from "./context.interface";
 import { RssService } from "./rss/rss.service";
 import { SettingService } from "./setting/setting.service";
-import { delay } from "./util/config";
 import mdLoader from "./util/mdLoader";
 
 let Parser = require("rss-parser");

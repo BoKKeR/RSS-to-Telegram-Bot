@@ -17,9 +17,9 @@ model rss {
 }
 
 model setting {
-  id             Int     @id @unique() @default(autoincrement())
+  id             Int     @id @unique @default(autoincrement())
   show_changelog Boolean @default(true)
   last_version   String
-  chat_id        Int     @unique()
+  chat_id        Int     @unique
   delay          Int
 }
