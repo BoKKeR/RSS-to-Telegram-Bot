@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { rss, Prisma } from "@prisma/client";
 import { Interval } from "@nestjs/schedule";
@@ -10,7 +10,7 @@ import { CustomLoggerService } from "../logger/logger.service";
 
 let parser = new Parser();
 @Injectable()
-export class RssService {
+export class RssService implements OnModuleInit {
   constructor(
     private prisma: PrismaService,
     private telegramService: TelegramService,
@@ -18,7 +18,10 @@ export class RssService {
   ) {
     this.logger.setContext("RssService");
     this.logger.debug("DELAY: " + delay + " seconds");
-    this.migrateToMultiChat();
+  }
+
+  async onModuleInit() {
+    await this.migrateToMultiChat();
   }
 
   async feed(
