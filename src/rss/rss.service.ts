@@ -21,9 +21,6 @@ export class RssService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    console.log({ env1: process.env.npm_package_version });
-    console.log({ env2: process.env.$npm_package_version });
-    console.log({ env3: process.env.npm_package_version });
     await this.migrateToMultiChat();
   }
 

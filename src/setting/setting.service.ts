@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { setting, Prisma } from "@prisma/client";
 import { CustomLoggerService } from "../logger/logger.service";
-import { delay } from "src/util/config";
+import { delay, packageVersion } from "src/util/config";
 
 @Injectable()
 export class SettingService {
@@ -77,11 +77,11 @@ export class SettingService {
     ) {
       const chatSetting = chatSettings[chatSettingIndex];
 
-      if (chatSetting.last_version !== process.env.npm_package_version) {
+      if (chatSetting.last_version !== packageVersion) {
         if (chatSetting.show_changelog) {
           // send changelog
         }
-        chatSetting.last_version = process.env.npm_package_version;
+        chatSetting.last_version = packageVersion;
       }
     }
   }
