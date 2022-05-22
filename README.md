@@ -49,3 +49,19 @@ docker create \
   --restart unless-stopped \
   bokker/rss.to.telegram
 ```
+
+# Development
+
+To run the project locally you can fill the .env.example file, and rename it to .env, this allows you to run the script locally with `npm start`
+
+## Prisma
+
+Prisma is used to manage SQLite structure changes and as a ORM
+
+To create any change you need to do the following:
+
+1. Backup current database
+2. Alter the prisma.schema
+3. `npx prisma migrate dev -n migration-name`
+4. test the migration on an old version of the database `npx prisma migrate deploy`
+5. test the migration by having no database `npx prisma migrate deploy`
