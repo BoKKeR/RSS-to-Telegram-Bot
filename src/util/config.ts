@@ -1,4 +1,4 @@
-import { version } from "./../../lib/version";
+import { version } from "../../package.json";
 
 export const delay = parseInt(process.env.DELAY)
   ? parseInt(process.env.DELAY)
