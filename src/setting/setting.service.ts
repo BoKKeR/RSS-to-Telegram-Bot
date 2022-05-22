@@ -95,7 +95,7 @@ export class SettingService {
       return await this.createSetting({
         chat_id: chatId,
         show_changelog: true,
-        last_version: process.env.npm_package_version,
+        last_version: packageVersion,
         delay: delay
       });
     }
