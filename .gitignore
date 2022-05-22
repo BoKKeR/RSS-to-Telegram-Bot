@@ -61,3 +61,5 @@ config/*
 *.env.production
 *.env.staging
 *.env.local
+
+lib/version.js
