@@ -11,4 +11,4 @@ export const logLevel =
     ? ["error", "warn", "debug", "log"]
     : ["error", "warn", "log"];
 
-export const packageVersion = version;
+export const packageVersion = version ? version : "not_found";
