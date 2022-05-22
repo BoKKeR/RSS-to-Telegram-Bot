@@ -7,7 +7,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "postbuild": "npm run copy-files",
-    "copy-files": "copyfiles -u 1 src/doc/**/*.md dist",
+    "copy-files": "copyfiles -u 1 src/doc/**/*.md dist/src",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
