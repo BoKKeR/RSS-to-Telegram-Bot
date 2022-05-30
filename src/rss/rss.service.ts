@@ -124,6 +124,9 @@ export class RssService implements OnModuleInit {
 
         for (let itemIndex = findSavedItemIndex; itemIndex > -1; itemIndex--) {
           const gapElement = feedItems[itemIndex];
+
+          if (!gapElement.link) return;
+
           this.logger.debug("sending: " + gapElement.link);
           await this.telegramService.sendRss(
             currentFeed.chat_id,

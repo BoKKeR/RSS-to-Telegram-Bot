@@ -7,6 +7,10 @@ export class TelegramService {
   constructor(@InjectBot() private bot: Telegraf<any>) {}
 
   async sendRss(chatId: number, link: string) {
-    await this.bot.telegram.sendMessage(chatId, link);
+    try {
+      await this.bot.telegram.sendMessage(chatId, link);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
