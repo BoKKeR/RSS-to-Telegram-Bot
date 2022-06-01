@@ -7,6 +7,7 @@ import * as Parser from "rss-parser";
 import { getFeedData } from "../util/axios";
 import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
+import uniqueItems from "../util/uniqueItems";
 
 let parser = new Parser();
 @Injectable()
@@ -148,6 +149,19 @@ export class RssService implements OnModuleInit {
       }
       this.logger.debug("-------------done------------------");
     }
+  }
+
+  async getStats() {
+    this.logger.debug("getting chat stats");
+    const feeds = await this.feeds({});
+    const users = uniqueItems(feeds, "chat_id");
+    const stats = {
+      feeds: feeds.length.toString(),
+      users: users.toString()
+    };
+    await this.telegramService.sendAdminMessage(
+      `Feeds: ${stats.feeds}\nUsers: ${stats.users}`
+    );
   }
 
   async migrateToMultiChat() {

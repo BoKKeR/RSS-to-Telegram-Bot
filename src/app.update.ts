@@ -2,6 +2,7 @@ import { Update, Help, Command, Start } from "nestjs-telegraf";
 import { Context } from "./context.interface";
 import { RssService } from "./rss/rss.service";
 import { SettingService } from "./setting/setting.service";
+import { adminchatid } from "./util/config";
 import mdLoader from "./util/mdLoader";
 
 let Parser = require("rss-parser");
@@ -226,5 +227,13 @@ export class AppUpdate {
     } catch (error) {
       await ctx.replyWithMarkdown("ERROR: " + error);
     }
+  }
+
+  @Command("stats")
+  async stats(ctx: Context) {
+    const fromId = this.getFromChatId(ctx);
+    if (fromId !== adminchatid) return;
+
+    await this.rssService.getStats();
   }
 }

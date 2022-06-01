@@ -16,8 +16,8 @@ export class TelegramService {
     }
   }
 
-  async sendAdminMessage(error: string) {
+  async sendAdminMessage(msg: string) {
     if (!adminchatid) return;
-    await this.sendRss(adminchatid, error);
+    await this.sendRss(adminchatid, msg);
   }
 }
