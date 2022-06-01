@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectBot } from "nestjs-telegraf";
-import { adminchatid } from "src/util/config";
+import { adminchatid } from "../util/config";
 import { Telegraf } from "telegraf";
 
 @Injectable()
