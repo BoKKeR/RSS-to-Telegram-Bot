@@ -5,6 +5,8 @@ export const delay = parseInt(process.env.DELAY)
   : 120;
 
 export const chatid = process.env.CHATID && parseInt(process.env.CHATID);
+export const adminchatid =
+  process.env.ADMIN_CHATID && parseInt(process.env.ADMIN_CHATID);
 
 export const logLevel =
   process.env.DEBUG === "true"
