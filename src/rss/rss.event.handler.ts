@@ -11,12 +11,12 @@ export class RssEventHandler implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    this.emitter.on("pauseAllFeeds", async (dto) => {
-      return await this.rssService.pauseAllFeeds(dto);
+    this.emitter.on("enableAllFeeds", async (dto) => {
+      return await this.rssService.enableAllFeeds(dto);
     });
 
-    this.emitter.on("pauseFeed", async (dto) => {
-      return await this.rssService.pauseFeed(dto);
+    this.emitter.on("enableFeed", async (dto) => {
+      return await this.rssService.enableFeed(dto);
     });
   }
 }

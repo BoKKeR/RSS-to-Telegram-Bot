@@ -43,7 +43,7 @@ export class AppUpdate {
     for (let elementIndex = 0; elementIndex < list.length; elementIndex++) {
       const entry = list[elementIndex];
       await ctx.reply(
-        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}\nPaused: ${entry.disabled}`,
+        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}\nEnabled: ${entry.disabled}`,
         { disable_web_page_preview: true }
       );
     }
@@ -99,7 +99,7 @@ export class AppUpdate {
         chat_id: fromId
       });
       await ctx.reply(
-        `ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}\nPAUSED: false`,
+        `ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}\nEnabled: false`,
         {
           disable_web_page_preview: true
         }
@@ -166,43 +166,43 @@ export class AppUpdate {
     await ctx.reply(lastItem.link);
   }
 
-  @Command("pause_all")
+  @Command("enable_all")
   async onDisableAll(ctx: Context) {
     const fromId = this.getFromChatId(ctx);
-    const entries = this.getMessage(ctx).replace("/pause_all ", "").split(" ");
+    const entries = this.getMessage(ctx).replace("/enable_all ", "").split(" ");
     if (!entries.length) {
       await ctx.reply(
-        "ERROR: wrong input, correct syntax: \n/pause_all true/false"
+        "ERROR: wrong input, correct syntax: \n/enable_all true/false"
       );
       return;
     }
 
-    const pause = toBoolean(entries[0]);
+    const enable = toBoolean(entries[0]);
 
-    this.emitter.emit("pauseAllFeeds", { chatId: fromId, pause: pause });
-    await ctx.reply("All feeds set to pause: " + pause);
+    this.emitter.emit("enableAllFeeds", { chatId: fromId, enable: enable });
+    await ctx.reply("All feeds set to enable: " + enable);
   }
 
-  @Command("pause")
+  @Command("enable")
   async onDisableFeed(ctx: Context) {
-    const entries = this.getMessage(ctx).replace("/pause ", "").split(" ");
+    const entries = this.getMessage(ctx).replace("/enable ", "").split(" ");
     if (entries.length !== 2) {
       await ctx.reply(
-        "ERROR: wrong input, correct syntax: \n/pause feedName true/false"
+        "ERROR: wrong input, correct syntax: \n/enable feedName true/false"
       );
       return;
     }
 
     const feedName = entries[0];
-    const pause = toBoolean(entries[1]);
+    const enable = toBoolean(entries[1]);
 
     const chatId = this.getFromChatId(ctx);
-    this.emitter.emit("pauseFeed", {
+    this.emitter.emit("enableFeed", {
       chatId: chatId,
       name: feedName,
-      pause: pause
+      enable: enable
     });
-    await ctx.reply(`Feed: ${feedName} set to pause: ${pause}`);
+    await ctx.reply(`Feed: ${feedName} set to enable: ${enable}`);
   }
 
   @Command("settings")

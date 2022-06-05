@@ -18,9 +18,9 @@ export class TelegramService {
       await this.bot.telegram.sendMessage(chatId, link);
     } catch (error) {
       if (error.error_code === 403) {
-        this.eventEmitter.emit("pauseAllFeeds", {
+        this.eventEmitter.emit("enableAllFeeds", {
           chatId: chatId,
-          pause: true
+          enable: true
         });
         await this.sendAdminMessage("disabling all feeds for" + chatId);
       } else {
