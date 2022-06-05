@@ -33,6 +33,7 @@
     "axios": "^0.26.1",
     "carbon-now-cli": "^1.4.0",
     "copyfiles": "^2.4.1",
+    "nest-emitter": "^1.1.1",
     "nestjs-telegraf": "^2.4.0",
     "pre-push": "^0.1.2",
     "reflect-metadata": "^0.1.13",

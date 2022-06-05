@@ -1,9 +1,12 @@
+import { InjectEventEmitter } from "nest-emitter";
 import { Update, Help, Command, Start } from "nestjs-telegraf";
 import { Context } from "./context.interface";
+import { EventEmitterType } from "./events";
 import { RssService } from "./rss/rss.service";
 import { SettingService } from "./setting/setting.service";
 import { adminchatid } from "./util/config";
 import mdLoader from "./util/mdLoader";
+import { toBoolean } from "./util/toBoolean";
 
 let Parser = require("rss-parser");
 let parser = new Parser();
@@ -12,7 +15,8 @@ let parser = new Parser();
 export class AppUpdate {
   constructor(
     private rssService: RssService,
-    private settingService: SettingService
+    private settingService: SettingService,
+    @InjectEventEmitter() private readonly emitter: EventEmitterType
   ) {}
 
   getMessage(ctx: Context) {
@@ -39,7 +43,7 @@ export class AppUpdate {
     for (let elementIndex = 0; elementIndex < list.length; elementIndex++) {
       const entry = list[elementIndex];
       await ctx.reply(
-        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}`,
+        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}\nPaused: ${entry.disabled}`,
         { disable_web_page_preview: true }
       );
     }
@@ -94,9 +98,12 @@ export class AppUpdate {
         link: link,
         chat_id: fromId
       });
-      await ctx.reply(`ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}`, {
-        disable_web_page_preview: true
-      });
+      await ctx.reply(
+        `ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}\nPAUSED: false`,
+        {
+          disable_web_page_preview: true
+        }
+      );
     } catch (error) {
       if (error.code === "P2002") {
         await ctx.reply(
@@ -157,6 +164,45 @@ export class AppUpdate {
     const lastItem = feed.items[0];
 
     await ctx.reply(lastItem.link);
+  }
+
+  @Command("pause_all")
+  async onDisableAll(ctx: Context) {
+    const fromId = this.getFromChatId(ctx);
+    const entries = this.getMessage(ctx).replace("/pause_all ", "").split(" ");
+    if (!entries.length) {
+      await ctx.reply(
+        "ERROR: wrong input, correct syntax: \n/pause_all true/false"
+      );
+      return;
+    }
+
+    const pause = toBoolean(entries[0]);
+
+    this.emitter.emit("pauseAllFeeds", { chatId: fromId, pause: pause });
+    await ctx.reply("All feeds set to pause: " + pause);
+  }
+
+  @Command("pause")
+  async onDisableFeed(ctx: Context) {
+    const entries = this.getMessage(ctx).replace("/pause ", "").split(" ");
+    if (entries.length !== 2) {
+      await ctx.reply(
+        "ERROR: wrong input, correct syntax: \n/pause feedName true/false"
+      );
+      return;
+    }
+
+    const feedName = entries[0];
+    const pause = toBoolean(entries[1]);
+
+    const chatId = this.getFromChatId(ctx);
+    this.emitter.emit("pauseFeed", {
+      chatId: chatId,
+      name: feedName,
+      pause: pause
+    });
+    await ctx.reply(`Feed: ${feedName} set to pause: ${pause}`);
   }
 
   @Command("settings")

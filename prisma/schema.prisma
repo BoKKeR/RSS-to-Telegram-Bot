@@ -9,11 +9,12 @@ datasource db {
 }
 
 model rss {
-  id      Int    @id @unique(map: "sqlite_autoindex_rss_1") @default(autoincrement())
-  link    String
-  last    String
-  name    String
-  chat_id Int    @default(0)
+  id       Int     @id @unique(map: "sqlite_autoindex_rss_1") @default(autoincrement())
+  link     String
+  last     String
+  name     String
+  chat_id  Int     @default(0)
+  disabled Boolean @default(false)
 }
 
 model setting {

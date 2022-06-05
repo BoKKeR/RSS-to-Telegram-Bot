@@ -94,6 +94,20 @@ export class RssService implements OnModuleInit {
     await new Promise((resolve) => setTimeout(resolve, 3500));
   }
 
+  async pauseAllFeeds(dto: { chatId: number; pause: boolean }) {
+    await this.prisma.rss.updateMany({
+      where: { chat_id: dto.chatId },
+      data: { disabled: dto.pause }
+    });
+  }
+
+  async pauseFeed(dto: { name: string; pause: boolean }) {
+    await this.prisma.rss.updateMany({
+      where: { name: dto.name },
+      data: { disabled: dto.pause }
+    });
+  }
+
   @Interval(delay * 1000)
   async handleInterval() {
     const feeds = await this.feeds({});
@@ -153,14 +167,16 @@ export class RssService implements OnModuleInit {
 
   async getStats() {
     this.logger.debug("getting chat stats");
-    const feeds = await this.feeds({});
-    const users = uniqueItems(feeds, "chat_id");
+    const enabledFeeds = await this.feeds({ where: { disabled: false } });
+    const disabledFeeds = await this.feeds({ where: { disabled: true } });
+    const users = uniqueItems(enabledFeeds, "chat_id");
     const stats = {
-      feeds: feeds.length.toString(),
-      users: users.toString()
+      feeds: enabledFeeds.length.toString(),
+      users: users.toString(),
+      disabledFeeds: disabledFeeds.length.toString()
     };
     await this.telegramService.sendAdminMessage(
-      `Feeds: ${stats.feeds}\nUsers: ${stats.users}`
+      `Feeds: ${stats.feeds}\nActive Users: ${stats.users}\nDisabled Feeds: ${stats.disabledFeeds}`
     );
   }
 
