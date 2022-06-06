@@ -110,7 +110,7 @@ export class RssService implements OnModuleInit {
 
   @Interval(delay * 1000)
   async handleInterval() {
-    const feeds = await this.feeds({});
+    const feeds = await this.feeds({ where: { disabled: false } });
 
     if (feeds.length === 0) {
       return;
