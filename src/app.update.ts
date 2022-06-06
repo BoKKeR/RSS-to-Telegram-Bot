@@ -43,7 +43,9 @@ export class AppUpdate {
     for (let elementIndex = 0; elementIndex < list.length; elementIndex++) {
       const entry = list[elementIndex];
       await ctx.reply(
-        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${entry.last}\nEnabled: ${entry.disabled}`,
+        `Title: ${entry.name}\nRSS URL: ${entry.link}\nLast checked entry: ${
+          entry.last
+        }\nEnabled: ${!entry.disabled}`,
         { disable_web_page_preview: true }
       );
     }
@@ -99,7 +101,7 @@ export class AppUpdate {
         chat_id: fromId
       });
       await ctx.reply(
-        `ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}\nEnabled: false`,
+        `ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}\nEnabled: true`,
         {
           disable_web_page_preview: true
         }
