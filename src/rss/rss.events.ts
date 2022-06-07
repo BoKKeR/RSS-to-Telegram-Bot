@@ -1,4 +1,4 @@
 export interface RssEvents {
-  enableAllFeeds: { chatId: number; enable: boolean };
-  enableFeed: { chatId: number; name: string; enable: boolean };
+  disableAllFeeds: { chatId: number; disable: boolean };
+  disableFeed: { chatId: number; name: string; disable: boolean };
 }

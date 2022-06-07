@@ -8,8 +8,8 @@ commands:
 */remove link_name removes* the RSS link, multiple links can be removed with one command
 */list* Lists all the titles and the RSS links from the DB
 */settings* Lists all the settings and allows you to change them
-*/enable title boolean* enable/disable specific feed.
-*/enable_all boolean* enable/disable all feeds.
+*/disable title boolean* disable/disable specific feed.
+*/disable_all boolean* disable/disable all feeds.
 */test* Inbuilt command that fetches a post from Reddits RSS.
 
 The current chatId is: *CHATID_PLACEHOLDER*

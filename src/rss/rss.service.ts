@@ -94,23 +94,24 @@ export class RssService implements OnModuleInit {
     await new Promise((resolve) => setTimeout(resolve, 3500));
   }
 
-  async enableAllFeeds(dto: { chatId: number; enable: boolean }) {
+  async disableAllFeeds(dto: { chatId: number; disable: boolean }) {
     await this.prisma.rss.updateMany({
       where: { chat_id: dto.chatId },
-      data: { disabled: dto.enable }
+      data: { disabled: dto.disable }
     });
   }
 
-  async enableFeed(dto: { name: string; enable: boolean }) {
+  async disableFeed(dto: { name: string; disable: boolean }) {
     await this.prisma.rss.updateMany({
       where: { name: dto.name },
-      data: { disabled: dto.enable }
+      data: { disabled: dto.disable }
     });
   }
 
   @Interval(delay * 1000)
   async handleInterval() {
     const feeds = await this.feeds({ where: { disabled: false } });
+    console.log(feeds);
 
     if (feeds.length === 0) {
       return;
