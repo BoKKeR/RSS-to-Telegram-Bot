@@ -96,10 +96,11 @@ export class AppUpdate {
         last: lastItem.link,
         name: name,
         link: link,
-        chat_id: fromId
+        chat_id: fromId,
+        disabled: false
       });
       await ctx.reply(
-        `ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}\ndisabled: true`,
+        `ADDED: \nRSS: ${lastItem.link}\nTITLE: ${name}\ndisabled: false`,
         {
           disable_web_page_preview: true
         }
