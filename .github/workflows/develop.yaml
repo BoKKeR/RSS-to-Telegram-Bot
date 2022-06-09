@@ -43,3 +43,11 @@ jobs:
         with:
           push: true
           tags: bokker/rss.to.telegram:develop,bokker/rss.to.telegram:${{ steps.package-version.outputs.current-version}}-alpha
+
+  update-stack:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update deployed stack
+        run: |
+          curl --fail --insecure --request POST --url ${{ secrets.DEV_HOOK }}
