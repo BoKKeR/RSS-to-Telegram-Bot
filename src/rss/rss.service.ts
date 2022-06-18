@@ -118,50 +118,59 @@ export class RssService implements OnModuleInit {
 
     for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
       const currentFeed = feeds[feedIndex];
-      let feedReq = await getFeedData(currentFeed.link);
+      try {
+        let feedReq = await getFeedData(currentFeed.link);
 
-      // @ts-ignore
-      let feed = await parser.parseString(feedReq);
+        // @ts-ignore
+        let feed = await parser.parseString(feedReq);
 
-      const feedItems = feed.items;
+        const feedItems = feed.items;
 
-      const lastItem = feedItems[0];
-      this.logger.debug(
-        `\n\n-------checking feed: ${currentFeed.name}----------`
-      );
-      this.logger.debug("last item: " + lastItem.link);
-      if (lastItem.link !== currentFeed.last) {
-        const findSavedItemIndex =
-          feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
-            ? feedItems.findIndex((item) => item.link === currentFeed.last) - 1
-            : feedItems.length - 1;
-        this.logger.debug("new elements: " + (findSavedItemIndex + 1));
+        const lastItem = feedItems[0];
+        this.logger.debug(
+          `\n\n-------checking feed: ${currentFeed.name}----------`
+        );
+        this.logger.debug("last item: " + lastItem.link);
+        if (lastItem.link !== currentFeed.last) {
+          const findSavedItemIndex =
+            feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
+              ? feedItems.findIndex((item) => item.link === currentFeed.last) -
+                1
+              : feedItems.length - 1;
+          this.logger.debug("new elements: " + (findSavedItemIndex + 1));
 
-        for (let itemIndex = findSavedItemIndex; itemIndex > -1; itemIndex--) {
-          const gapElement = feedItems[itemIndex];
+          for (
+            let itemIndex = findSavedItemIndex;
+            itemIndex > -1;
+            itemIndex--
+          ) {
+            const gapElement = feedItems[itemIndex];
 
-          if (!gapElement.link) return;
+            if (!gapElement.link) return;
 
-          this.logger.debug("sending: " + gapElement.link);
-          await this.telegramService.sendRss(
-            currentFeed.chat_id,
-            gapElement.link
-          );
-          if (itemIndex === 0) {
-            this.logger.debug("saving: " + lastItem.link);
+            this.logger.debug("sending: " + gapElement.link);
+            await this.telegramService.sendRss(
+              currentFeed.chat_id,
+              gapElement.link
+            );
+            if (itemIndex === 0) {
+              this.logger.debug("saving: " + lastItem.link);
 
-            await this.updateFeed({
-              where: { id: currentFeed.id },
-              data: { last: lastItem.link }
-            });
-            this.logger.debug("done-saving: " + lastItem.link);
-          } else {
-            this.logger.debug("sleep");
-            await this.sleep(); // sleep to prevent overloading the api
+              await this.updateFeed({
+                where: { id: currentFeed.id },
+                data: { last: lastItem.link }
+              });
+              this.logger.debug("done-saving: " + lastItem.link);
+            } else {
+              this.logger.debug("sleep");
+              await this.sleep(); // sleep to prevent overloading the api
+            }
           }
         }
+        this.logger.debug("-------------done------------------");
+      } catch (error) {
+        console.log(error);
       }
-      this.logger.debug("-------------done------------------");
     }
   }
 

@@ -22,7 +22,7 @@ export class TelegramService {
           chatId: chatId,
           disable: true
         });
-        await this.sendAdminMessage("disabling all feeds for" + chatId);
+        await this.sendAdminMessage("disabling all feeds for " + chatId);
       } else {
         await this.sendAdminMessage(JSON.stringify(error));
       }
