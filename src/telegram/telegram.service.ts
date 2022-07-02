@@ -3,7 +3,8 @@ import { InjectBot } from "nestjs-telegraf";
 import { adminchatid } from "../util/config";
 import { Telegraf } from "telegraf";
 import { InjectEventEmitter } from "nest-emitter";
-import { EventEmitterType } from "src/events";
+import { EventEmitterType } from "../events";
+import mdLoader from "../util/mdLoader";
 
 @Injectable()
 export class TelegramService {
@@ -12,6 +13,21 @@ export class TelegramService {
     @InjectEventEmitter()
     private readonly eventEmitter: EventEmitterType
   ) {}
+
+  async onApplicationBootstrap() {
+    const commands = (await mdLoader("help"))
+      .split("\n")
+      .map((line: string) => {
+        if (line.startsWith("*/")) {
+          const command = line.replace("* ", "*/ ").split("*/");
+          const description = line.split("* ");
+          return { command: command[1], description: description[1] };
+        }
+      })
+      .filter((anyValue) => typeof anyValue !== "undefined");
+
+    await this.bot.telegram.setMyCommands(commands);
+  }
 
   async sendRss(chatId: number, link: string) {
     try {
