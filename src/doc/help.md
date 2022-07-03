@@ -5,7 +5,7 @@ After successfully adding a RSS link, the bot starts fetching the feed in a give
 commands: 
 */help* shows this help message
 */add* title rss-link to add a new link
-*/remove* link_name removes the RSS link, multiple links can be removed with one command
+*/remove* link-name removes the RSS link, multiple links can be removed with one command
 */list* Lists all the titles and the RSS links from the DB
 */settings* Lists all the settings and allows you to change them
 */disable* title boolean disable/disable specific feed.
