@@ -33,7 +33,10 @@ export class TelegramService {
     try {
       await this.bot.telegram.sendMessage(chatId, link);
     } catch (error) {
-      if (error.response.error_code === 403) {
+      if (
+        error.response.error_code === 403 ||
+        error.response.description === "Bad Request: chat not found"
+      ) {
         this.eventEmitter.emit("disableAllFeeds", {
           chatId: chatId,
           disable: true
