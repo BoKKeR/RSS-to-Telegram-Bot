@@ -94,6 +94,13 @@ export class RssService implements OnModuleInit {
     await new Promise((resolve) => setTimeout(resolve, 3500));
   }
 
+  async migrateChat(dto: { chatId: number; newChatId: number }) {
+    await this.prisma.rss.updateMany({
+      where: { chat_id: dto.chatId },
+      data: { chat_id: dto.newChatId }
+    });
+  }
+
   async disableAllFeeds(dto: { chatId: number; disable: boolean }) {
     await this.prisma.rss.updateMany({
       where: { chat_id: dto.chatId },

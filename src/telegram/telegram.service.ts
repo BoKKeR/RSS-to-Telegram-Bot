@@ -41,7 +41,16 @@ export class TelegramService {
           chatId: chatId,
           disable: true
         });
-        await this.sendAdminMessage("disabling all feeds for " + chatId);
+        await this.sendAdminMessage("Disabling all feeds for " + chatId);
+      } else if (error.response.parameters.migrate_to_chat_id) {
+        const newChatId = error.response.parameters.migrate_to_chat_id;
+        this.eventEmitter.emit("migrateChat", {
+          chatId: chatId,
+          newChatId: newChatId
+        });
+        await this.sendAdminMessage(
+          `Migrated chat from ${chatId} to ${newChatId}`
+        );
       } else {
         await this.sendAdminMessage(JSON.stringify(error));
       }
