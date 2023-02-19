@@ -19,6 +19,7 @@ jobs:
             git config --global user.email "bokker11@hotmail.com"
             git config --global user.name "Norbert Takács"
       - run: npm install
+      - run: npm run build
       - run: npm test
       # - run: node node_modules/.bin/release-it --ci --preRelease=alpha
      
