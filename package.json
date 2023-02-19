@@ -86,7 +86,6 @@
     "testEnvironment": "node"
   },
   "pre-push": [
-    "test",
-    "generate:image"
+    "test"
   ]
 }
