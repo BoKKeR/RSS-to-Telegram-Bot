@@ -123,8 +123,7 @@ export class RssService implements OnModuleInit {
       return;
     }
 
-    for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
-      const currentFeed = feeds[feedIndex];
+    for (const currentFeed of feeds) {
       try {
         let feedReq = await getFeedData(currentFeed.link);
 
@@ -199,9 +198,7 @@ export class RssService implements OnModuleInit {
   async migrateToMultiChat() {
     this.logger.debug("migrate to multichat started");
     const feeds = await this.feeds({});
-    for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
-      const feed = feeds[feedIndex];
-
+    for (const feed of feeds) {
       if (feed.chat_id === 0 && chatid) {
         this.logger.debug("feed for migration found");
         try {
