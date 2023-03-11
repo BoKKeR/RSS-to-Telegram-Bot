@@ -155,13 +155,13 @@ export class RssService implements OnModuleInit {
             itemIndex > -1;
             itemIndex--
           ) {
-            const gapElement = feedItems[itemIndex];
-            if (!gapElement.link) return;
+            const gapItem = feedItems[itemIndex];
+            if (!gapItem.link) return;
 
             this.logger.debug(
-              `Adding job: ${gapElement.link} chat: ${currentFeed.chat_id}`
+              `Adding job: ${gapItem.link} chat: ${currentFeed.chat_id}`
             );
-            await this.addJob(currentFeed.chat_id, gapElement.link);
+            await this.addJob(currentFeed.chat_id, gapItem);
             if (itemIndex === 0) {
               this.logger.debug("saving: " + lastItem.link);
 
@@ -202,11 +202,11 @@ Completed: ${await this.messagesQueue.getCompletedCount()}`
     );
   }
 
-  async addJob(chatId: number, message: string) {
+  async addJob(chatId: number, feedItem: Parser.Item) {
     try {
       await this.messagesQueue.add("message", {
         chatId: chatId,
-        message: message
+        feedItem: feedItem
       });
     } catch (error) {
       console.log(error);
