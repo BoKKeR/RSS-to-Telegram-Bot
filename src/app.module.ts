@@ -25,7 +25,10 @@ import constants from "./util/constants";
       redis: {
         host: constants.env.REDIS_HOST,
         port: constants.env.REDIS_PORT,
-        password: constants.env.REDIS_PASSWORD
+        password: constants.env.REDIS_PASSWORD,
+        username: constants.env.REDIS_USER
+          ? constants.env.REDIS_USER
+          : "default"
       }
     })
   ],
