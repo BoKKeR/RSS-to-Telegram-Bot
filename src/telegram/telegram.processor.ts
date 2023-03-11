@@ -10,6 +10,7 @@ import { DoneCallback, Job, Queue } from "bull";
 import constants from "src/util/constants";
 import { CustomLoggerService } from "src/logger/logger.service";
 import { TelegramService } from "./telegram.service";
+import { Item } from "rss-parser";
 
 @Processor(constants.queue.messages)
 export class TelegramProcessor {
@@ -21,15 +22,18 @@ export class TelegramProcessor {
 
   @Process("message")
   async processName(
-    job: Job<{ message: string; chatId: number }>,
+    job: Job<{ feedItem: Item; chatId: number }>,
     done: DoneCallback
   ) {
     this.logger.debug(
-      `@Process id:${job.id} attempts:${job.attemptsMade} message:${job.data.message}`
+      `@Process id:${job.id} attempts:${job.attemptsMade} message:${job.data.feedItem.link}`
     );
 
     try {
-      await this.telegramService.sendRss(job.data.chatId, job.data.message);
+      await this.telegramService.sendRss(
+        job.data.chatId,
+        job.data.feedItem.link
+      );
       done();
     } catch (error) {
       if (error?.response?.error_code === 429) {
