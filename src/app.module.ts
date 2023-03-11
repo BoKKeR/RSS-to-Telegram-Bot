@@ -8,6 +8,8 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { SettingModule } from "./setting/setting.module";
 import { NestEmitterModule } from "nest-emitter";
 import { EventEmitter } from "events";
+import { BullModule } from "@nestjs/bull";
+import constants from "./util/constants";
 
 @Module({
   imports: [
@@ -18,7 +20,14 @@ import { EventEmitter } from "events";
       token: process.env.TOKEN
     }),
     RssModule,
-    SettingModule
+    SettingModule,
+    BullModule.forRoot({
+      redis: {
+        host: constants.REDIS_HOST,
+        port: constants.REDIS_PORT,
+        password: constants.REDIS_PASSWORD
+      }
+    })
   ],
   controllers: [],
   providers: [AppService, AppUpdate]

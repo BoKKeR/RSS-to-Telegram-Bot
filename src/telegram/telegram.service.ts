@@ -33,6 +33,9 @@ export class TelegramService {
     try {
       await this.bot.telegram.sendMessage(chatId, link);
     } catch (error) {
+      if (error.response.error_code === 429) {
+        throw error;
+      }
       if (
         error.response.error_code === 403 ||
         error.response.description === "Bad Request: chat not found"
@@ -41,8 +44,8 @@ export class TelegramService {
           chatId: chatId,
           disable: true
         });
-        await this.sendAdminMessage("Disabling all feeds for " + chatId);
-      } else if (error.response.parameters.migrate_to_chat_id) {
+        return await this.sendAdminMessage("Disabling all feeds for " + chatId);
+      } else if (error.response.parameters?.migrate_to_chat_id) {
         const newChatId = error.response.parameters.migrate_to_chat_id;
         this.eventEmitter.emit("migrateChat", {
           chatId: chatId,
