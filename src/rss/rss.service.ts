@@ -148,7 +148,7 @@ export class RssService implements OnModuleInit {
               ? feedItems.findIndex((item) => item.link === currentFeed.last) -
                 1
               : feedItems.length - 1;
-          this.logger.debug("new: " + (findSavedItemIndex + 1));
+          this.logger.debug("new items: " + (findSavedItemIndex + 1));
 
           for (
             let itemIndex = findSavedItemIndex;
