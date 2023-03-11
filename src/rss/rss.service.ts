@@ -8,11 +8,15 @@ import { getFeedData } from "../util/axios";
 import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
 import uniqueItems from "../util/uniqueItems";
+import { InjectQueue } from "@nestjs/bull";
+import { Queue } from "bull";
+import constants from "src/util/constants";
 
 let parser = new Parser();
 @Injectable()
 export class RssService implements OnModuleInit {
   constructor(
+    @InjectQueue(constants.queue.messages) private messagesQueue: Queue,
     private prisma: PrismaService,
     private telegramService: TelegramService,
     private logger: CustomLoggerService
@@ -23,6 +27,7 @@ export class RssService implements OnModuleInit {
 
   async onModuleInit() {
     await this.migrateToMultiChat();
+    this.messagesQueue.resume();
   }
 
   async feed(
@@ -136,29 +141,27 @@ export class RssService implements OnModuleInit {
         this.logger.debug(
           `\n\n-------checking feed: ${currentFeed.name}----------`
         );
-        this.logger.debug("last item: " + lastItem.link);
+        this.logger.debug("last: " + lastItem.link);
         if (lastItem.link !== currentFeed.last) {
           const findSavedItemIndex =
             feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
               ? feedItems.findIndex((item) => item.link === currentFeed.last) -
                 1
               : feedItems.length - 1;
-          this.logger.debug("new elements: " + (findSavedItemIndex + 1));
+          this.logger.debug("new items: " + (findSavedItemIndex + 1));
 
           for (
             let itemIndex = findSavedItemIndex;
             itemIndex > -1;
             itemIndex--
           ) {
-            const gapElement = feedItems[itemIndex];
+            const gapItem = feedItems[itemIndex];
+            if (!gapItem.link) return;
 
-            if (!gapElement.link) return;
-
-            this.logger.debug("sending: " + gapElement.link);
-            await this.telegramService.sendRss(
-              currentFeed.chat_id,
-              gapElement.link
+            this.logger.debug(
+              `Adding job: ${gapItem.link} chat: ${currentFeed.chat_id}`
             );
+            await this.addJob(currentFeed.chat_id, gapItem);
             if (itemIndex === 0) {
               this.logger.debug("saving: " + lastItem.link);
 
@@ -166,10 +169,7 @@ export class RssService implements OnModuleInit {
                 where: { id: currentFeed.id },
                 data: { last: lastItem.link }
               });
-              this.logger.debug("done-saving: " + lastItem.link);
-            } else {
-              this.logger.debug("sleep");
-              await this.sleep(); // sleep to prevent overloading the api
+              this.logger.debug("Done! saving checkpoint: " + lastItem.link);
             }
           }
         }
@@ -191,8 +191,26 @@ export class RssService implements OnModuleInit {
       disabledFeeds: disabledFeeds.length.toString()
     };
     await this.telegramService.sendAdminMessage(
-      `Feeds: ${stats.feeds}\nActive Users: ${stats.users}\nDisabled Feeds: ${stats.disabledFeeds}`
+      `Enabled feeds: ${stats.feeds}
+Active Users: ${stats.users}
+Disabled Feeds: ${stats.disabledFeeds}
+
+-- Queue --
+Awaiting: ${await this.messagesQueue.count()},
+Active: ${await this.messagesQueue.getActiveCount()},
+Completed: ${await this.messagesQueue.getCompletedCount()}`
     );
+  }
+
+  async addJob(chatId: number, feedItem: Parser.Item) {
+    try {
+      await this.messagesQueue.add("message", {
+        chatId: chatId,
+        feedItem: feedItem
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async migrateToMultiChat() {
