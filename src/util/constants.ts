@@ -4,11 +4,11 @@ const env = {
   REDIS_PORT: parseInt(process.env.REDIS_PORT),
   REDIS_ENV: process.env.REDIS_ENV,
   REDIS_USER: process.env.REDIS_USER,
-  ENVIRONMENT: process.env.ENVIRONMENT
+  REDIS_MUTEX: process.env.REDIS_MUTEX
 };
 
 const queue = {
-  messages: "messages"
+  messages: `messages_${env.REDIS_MUTEX}`
 };
 
 export default { env, queue };
