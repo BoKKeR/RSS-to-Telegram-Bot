@@ -6,4 +6,8 @@ const env = {
   ENVIRONMENT: process.env.ENVIRONMENT
 };
 
-export default env;
+const queue = {
+  messages: "messages"
+};
+
+export default { env, queue };

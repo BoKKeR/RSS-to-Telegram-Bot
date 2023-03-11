@@ -7,15 +7,16 @@ import {
   InjectQueue
 } from "@nestjs/bull";
 import { DoneCallback, Job, Queue } from "bull";
+import constants from "src/util/constants";
 import { CustomLoggerService } from "src/logger/logger.service";
 import { TelegramService } from "./telegram.service";
 
-@Processor("messages")
+@Processor(constants.queue.messages)
 export class TelegramProcessor {
   constructor(
     private logger: CustomLoggerService,
     private readonly telegramService: TelegramService,
-    @InjectQueue("messages") private messagesQueue: Queue
+    @InjectQueue(constants.queue.messages) private messagesQueue: Queue
   ) {}
 
   @Process("message")

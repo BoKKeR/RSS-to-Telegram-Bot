@@ -10,12 +10,13 @@ import { CustomLoggerService } from "../logger/logger.service";
 import uniqueItems from "../util/uniqueItems";
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
+import constants from "src/util/constants";
 
 let parser = new Parser();
 @Injectable()
 export class RssService implements OnModuleInit {
   constructor(
-    @InjectQueue("messages") private messagesQueue: Queue,
+    @InjectQueue(constants.queue.messages) private messagesQueue: Queue,
     private prisma: PrismaService,
     private telegramService: TelegramService,
     private logger: CustomLoggerService

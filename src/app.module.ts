@@ -23,9 +23,9 @@ import constants from "./util/constants";
     SettingModule,
     BullModule.forRoot({
       redis: {
-        host: constants.REDIS_HOST,
-        port: constants.REDIS_PORT,
-        password: constants.REDIS_PASSWORD
+        host: constants.env.REDIS_HOST,
+        port: constants.env.REDIS_PORT,
+        password: constants.env.REDIS_PASSWORD
       }
     })
   ],

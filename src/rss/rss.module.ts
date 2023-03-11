@@ -1,6 +1,7 @@
 import { BullModule } from "@nestjs/bull";
 import { Module } from "@nestjs/common";
 import { CustomLoggerModule } from "src/logger/logger.module";
+import constants from "src/util/constants";
 import { PrismaService } from "../prisma.service";
 import { TelegramModule } from "../telegram/telegram.module";
 import { RssEventHandler } from "./rss.event.handler";
@@ -11,7 +12,7 @@ import { RssService } from "./rss.service";
     TelegramModule,
     CustomLoggerModule,
     BullModule.registerQueue({
-      name: "messages"
+      name: constants.queue.messages
     })
   ],
   controllers: [],
