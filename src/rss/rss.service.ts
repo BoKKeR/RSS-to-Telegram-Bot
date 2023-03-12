@@ -8,8 +8,10 @@ import { getFeedData } from "../util/axios";
 import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
 import uniqueItems from "../util/uniqueItems";
+import { Telegraf } from "telegraf";
 
 let parser = new Parser();
+let bot = new Telegraf(process.env.TOKEN);
 @Injectable()
 export class RssService implements OnModuleInit {
   constructor(
@@ -154,11 +156,65 @@ export class RssService implements OnModuleInit {
 
             if (!gapElement.link) return;
 
-            this.logger.debug("sending: " + gapElement.link);
-            await this.telegramService.sendRss(
-              currentFeed.chat_id,
-              gapElement.link
-            );
+            let rssOption_image = await this.prisma.setting.findFirst({where: {feed_type:"image"}});
+            let rssOption_title = await this.prisma.setting.findFirst({where: {feed_type: "title"}});
+
+            if(rssOption_image) {
+              let regex = /<img src="([^"]*)"/;
+              let image = regex.exec(gapElement.content);
+              //send image with caption
+              try {
+                this.logger.debug("sending: " + image[1]);
+                let caption = `<a href="${gapElement.link}">${gapElement.title}</a>`
+
+                if(gapElement.creator) {
+                  caption += `\nBy ${gapElement.creator}`
+                }
+
+                await bot.telegram.sendPhoto(
+                  currentFeed.chat_id,
+                  {url: `${image[1]}`},
+                  {parse_mode: "HTML", caption}
+                )
+                //change message format when image process fails
+              } catch (error) {
+                if(error.description === "Bad Request: IMAGE_PROCESS_FAILED") {
+                  let message = `No valid image\n\n<a href="${gapElement.link}">${gapElement.title}</a>`;
+
+                  if(gapElement.creator) {
+                    message += `\nBy ${gapElement.creator}`;
+                  }
+
+                  this.logger.debug("sending: " + gapElement.link)
+                  await bot.telegram.sendMessage(
+                    currentFeed.chat_id,
+                    message,
+                    {parse_mode: "HTML"}
+                  )
+                }
+              }
+            } else if(rssOption_title){
+              this.logger.debug("sending: " + gapElement.title);
+
+              let message = `<a href="${gapElement.link}">${gapElement.title}</a>`;
+
+              if(gapElement.creator) {
+                message += `\nBy ${gapElement.creator}`;
+              }
+              
+              await bot.telegram.sendMessage(
+                currentFeed.chat_id,
+                message,
+                {parse_mode: "HTML"}
+              )
+            } else {
+              this.logger.debug("sending: " + gapElement.link);
+              await bot.telegram.sendMessage(
+                currentFeed.chat_id,
+                gapElement.link
+              )
+            }
+
             if (itemIndex === 0) {
               this.logger.debug("saving: " + lastItem.link);
 
