@@ -1,21 +1,25 @@
 import { InjectEventEmitter } from "nest-emitter";
 import { Update, Help, Command, Start } from "nestjs-telegraf";
+import { Telegraf } from "telegraf";
 import { Context } from "./context.interface";
 import { EventEmitterType } from "./events";
 import { RssService } from "./rss/rss.service";
 import { SettingService } from "./setting/setting.service";
+import { TelegramService } from "./telegram/telegram.service";
 import { adminchatid } from "./util/config";
 import mdLoader from "./util/mdLoader";
 import { toBoolean } from "./util/toBoolean";
 
 let Parser = require("rss-parser");
 let parser = new Parser();
+let bot = new Telegraf(process.env.TOKEN);
 
 @Update()
 export class AppUpdate {
   constructor(
     private rssService: RssService,
     private settingService: SettingService,
+    private telegramService: TelegramService,
     @InjectEventEmitter() private readonly emitter: EventEmitterType
   ) {}
 
@@ -161,10 +165,78 @@ export class AppUpdate {
 
     let parser = new Parser();
     let feed = await parser.parseURL("https://www.reddit.com/r/funny/new/.rss");
-
+    
     const lastItem = feed.items[0];
 
-    await ctx.reply(lastItem.link);
+    let regex = /<img src="([^"]*)"/;
+    let imageSrc = regex.exec(lastItem.content);
+
+    let setting = await this.settingService.getSettingByChatId(this.getFromChatId(ctx));
+    switch(setting.feed_type){
+      case "image":
+        try {
+          let caption = `<a href="${lastItem.link}">${lastItem.title}</a>`
+
+          if(lastItem.creator) {
+            caption += `\nBy ${lastItem.creator}`
+          }
+          await bot.telegram.sendPhoto(
+            ctx.message.chat.id,
+            {url: imageSrc[1]},
+            {caption: caption}
+          )
+        } catch (error) {
+          if(error.description === "Bad Request: IMAGE_PROCESS_FAILED"){
+            let message = `No valid image\n\n<a href="${lastItem.link}">${lastItem.title}</a>`;
+
+            if(lastItem.creator) {
+              message += `\nBy ${lastItem.creator}`;
+            }
+
+            await bot.telegram.sendMessage(
+              ctx.message.chat.id,
+              `No valid image...\n\n<a href='${lastItem.link}'>${lastItem.title}</a>`,
+              {parse_mode: "HTML"}
+            )
+          }
+        };
+        break;
+
+      case "title":
+        let message = `No valid image\n\n<a href="${lastItem.link}">${lastItem.title}</a>`;
+
+        if(lastItem.creator) {
+          message += `\nBy ${lastItem.creator}`;
+        }
+
+        await bot.telegram.sendMessage(
+          ctx.message.chat.id,
+          `<a href='${lastItem.link}'>${lastItem.title}</a>`,
+          {parse_mode: "HTML"}
+        )
+        break;
+      
+      case "link_only":
+        await bot.telegram.sendMessage(
+          ctx.message.chat.id,
+          lastItem.link
+        )
+    }
+
+    
+
+    
+    /*await bot.telegram.sendMessage(
+      ctx.message.chat.id,
+      `<a href='${lastItem.link}'>${lastItem.title}</a>`,
+      {parse_mode: "HTML"}
+    )*/
+
+    //await ctx.reply(lastItem.link);
+    /*await this.telegramService.sendRss(
+      ctx.message.chat.id,
+      image ? image[1] : lastItem.link
+    )*/
   }
 
   @Command("disable_all")
@@ -243,6 +315,14 @@ export class AppUpdate {
         });
       }
 
+      //change feed type
+      if (key === "feed_type" && (value === "image" || value === "title" || value === "link_only")) {
+        await this.settingService.updateSetting({
+          where: {chat_id: fromId},
+          data: { [key]: value}
+        });
+      }
+
       setting = await this.settingService.getSettingByChatId(fromId);
     }
     const msg =
@@ -250,7 +330,11 @@ export class AppUpdate {
       "\n\ndelay=" +
       setting.delay +
       "\nshow_changelog=" +
-      setting.show_changelog;
+      setting.show_changelog +
+      "\nfeed_type=" +
+      setting.feed_type +
+      "\n\nfeed_type options: image | title | link_only"
+      
 
     await ctx.replyWithMarkdown(msg.replaceAll("_", "\\_"));
   }
