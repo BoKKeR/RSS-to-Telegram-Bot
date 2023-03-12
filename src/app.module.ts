@@ -8,6 +8,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { SettingModule } from "./setting/setting.module";
 import { NestEmitterModule } from "nest-emitter";
 import { EventEmitter } from "events";
+import { TelegramModule } from "./telegram/telegram.module";
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { EventEmitter } from "events";
       token: process.env.TOKEN
     }),
     RssModule,
-    SettingModule
+    SettingModule,
+    TelegramModule
   ],
   controllers: [],
   providers: [AppService, AppUpdate]
