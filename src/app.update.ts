@@ -222,21 +222,6 @@ export class AppUpdate {
           lastItem.link
         )
     }
-
-    
-
-    
-    /*await bot.telegram.sendMessage(
-      ctx.message.chat.id,
-      `<a href='${lastItem.link}'>${lastItem.title}</a>`,
-      {parse_mode: "HTML"}
-    )*/
-
-    //await ctx.reply(lastItem.link);
-    /*await this.telegramService.sendRss(
-      ctx.message.chat.id,
-      image ? image[1] : lastItem.link
-    )*/
   }
 
   @Command("disable_all")
