@@ -9,12 +9,15 @@ import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
 import uniqueItems from "../util/uniqueItems";
 import { Telegraf } from "telegraf";
-
+import { InjectQueue } from "@nestjs/bull";
+import { Queue } from "bull";
+import constants from "src/util/constants";
 let parser = new Parser();
 let bot = new Telegraf(process.env.TOKEN);
 @Injectable()
 export class RssService implements OnModuleInit {
   constructor(
+    @InjectQueue(constants.queue.messages) private messagesQueue: Queue,
     private prisma: PrismaService,
     private telegramService: TelegramService,
     private logger: CustomLoggerService
@@ -25,6 +28,7 @@ export class RssService implements OnModuleInit {
 
   async onModuleInit() {
     await this.migrateToMultiChat();
+    this.messagesQueue.resume();
   }
 
   async feed(
@@ -138,37 +142,44 @@ export class RssService implements OnModuleInit {
         this.logger.debug(
           `\n\n-------checking feed: ${currentFeed.name}----------`
         );
-        this.logger.debug("last item: " + lastItem.link);
+        this.logger.debug("last: " + lastItem.link);
         if (lastItem.link !== currentFeed.last) {
           const findSavedItemIndex =
             feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
               ? feedItems.findIndex((item) => item.link === currentFeed.last) -
                 1
               : feedItems.length - 1;
-          this.logger.debug("new elements: " + (findSavedItemIndex + 1));
+          this.logger.debug("new items: " + (findSavedItemIndex + 1));
 
           for (
             let itemIndex = findSavedItemIndex;
             itemIndex > -1;
             itemIndex--
           ) {
-            const gapElement = feedItems[itemIndex];
+            const gapItem = feedItems[itemIndex];
+            if (!gapItem.link) return;
 
-            if (!gapElement.link) return;
+            if (!gapItem.link) return;
+
+            this.logger.debug("sending: " + gapItem.link);
+            await this.telegramService.sendRss(
+              currentFeed.chat_id,
+              gapItem.link
+            );
 
             let rssOption_image = await this.prisma.setting.findFirst({where: {feed_type:"image"}});
             let rssOption_title = await this.prisma.setting.findFirst({where: {feed_type: "title"}});
 
             if(rssOption_image) {
               let regex = /<img src="([^"]*)"/;
-              let image = regex.exec(gapElement.content);
+              let image = regex.exec(gapItem.content);
               //send image with caption
               try {
                 this.logger.debug("sending: " + image[1]);
-                let caption = `<a href="${gapElement.link}">${gapElement.title}</a>`
+                let caption = `<a href="${gapItem.link}">${gapItem.title}</a>`
 
-                if(gapElement.creator) {
-                  caption += `\nBy ${gapElement.creator}`
+                if(gapItem.creator) {
+                  caption += `\nBy ${gapItem.creator}`
                 }
 
                 await bot.telegram.sendPhoto(
@@ -179,13 +190,13 @@ export class RssService implements OnModuleInit {
                 //change message format when image process fails
               } catch (error) {
                 if(error.description === "Bad Request: IMAGE_PROCESS_FAILED") {
-                  let message = `No valid image\n\n<a href="${gapElement.link}">${gapElement.title}</a>`;
+                  let message = `No valid image\n\n<a href="${gapItem.link}">${gapItem.title}</a>`;
 
-                  if(gapElement.creator) {
-                    message += `\nBy ${gapElement.creator}`;
+                  if(gapItem.creator) {
+                    message += `\nBy ${gapItem.creator}`;
                   }
 
-                  this.logger.debug("sending: " + gapElement.link)
+                  this.logger.debug("sending: " + gapItem.link)
                   await bot.telegram.sendMessage(
                     currentFeed.chat_id,
                     message,
@@ -194,12 +205,12 @@ export class RssService implements OnModuleInit {
                 }
               }
             } else if(rssOption_title){
-              this.logger.debug("sending: " + gapElement.title);
+              this.logger.debug("sending: " + gapItem.title);
 
-              let message = `<a href="${gapElement.link}">${gapElement.title}</a>`;
+              let message = `<a href="${gapItem.link}">${gapItem.title}</a>`;
 
-              if(gapElement.creator) {
-                message += `\nBy ${gapElement.creator}`;
+              if(gapItem.creator) {
+                message += `\nBy ${gapItem.creator}`;
               }
               
               await bot.telegram.sendMessage(
@@ -208,10 +219,10 @@ export class RssService implements OnModuleInit {
                 {parse_mode: "HTML"}
               )
             } else {
-              this.logger.debug("sending: " + gapElement.link);
+              this.logger.debug("sending: " + gapItem.link);
               await bot.telegram.sendMessage(
                 currentFeed.chat_id,
-                gapElement.link
+                gapItem.link
               )
             }
 
@@ -222,10 +233,7 @@ export class RssService implements OnModuleInit {
                 where: { id: currentFeed.id },
                 data: { last: lastItem.link }
               });
-              this.logger.debug("done-saving: " + lastItem.link);
-            } else {
-              this.logger.debug("sleep");
-              await this.sleep(); // sleep to prevent overloading the api
+              this.logger.debug("Done! saving checkpoint: " + lastItem.link);
             }
           }
         }
@@ -247,8 +255,26 @@ export class RssService implements OnModuleInit {
       disabledFeeds: disabledFeeds.length.toString()
     };
     await this.telegramService.sendAdminMessage(
-      `Feeds: ${stats.feeds}\nActive Users: ${stats.users}\nDisabled Feeds: ${stats.disabledFeeds}`
+      `Enabled feeds: ${stats.feeds}
+Active Users: ${stats.users}
+Disabled Feeds: ${stats.disabledFeeds}
+
+-- Queue --
+Awaiting: ${await this.messagesQueue.count()},
+Active: ${await this.messagesQueue.getActiveCount()},
+Completed: ${await this.messagesQueue.getCompletedCount()}`
     );
+  }
+
+  async addJob(chatId: number, feedItem: Parser.Item) {
+    try {
+      await this.messagesQueue.add("message", {
+        chatId: chatId,
+        feedItem: feedItem
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async migrateToMultiChat() {

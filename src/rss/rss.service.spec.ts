@@ -5,6 +5,8 @@ import * as Parser from "rss-parser";
 import axios from "axios";
 import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
+import { BullModule, getQueueToken } from "@nestjs/bull";
+import constants from "../util/constants";
 
 jest.mock("axios");
 jest.mock("rss-parser", () => {
@@ -96,9 +98,21 @@ describe("RssService", () => {
   let prisma: PrismaService;
   let telegramService: TelegramService;
   let loggerService: CustomLoggerService;
+  let messageQueue: BullModule;
+
+  const importQueue: any = {
+    add: jest.fn(),
+    process: jest.fn(),
+    on: jest.fn()
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        BullModule.registerQueue({
+          name: constants.queue.messages
+        })
+      ],
       providers: [
         RssService,
         PrismaService,
@@ -118,7 +132,10 @@ describe("RssService", () => {
           }
         }
       ]
-    }).compile();
+    })
+      .overrideProvider(getQueueToken(constants.queue.messages))
+      .useValue(importQueue)
+      .compile();
 
     service = module.get<RssService>(RssService);
     prisma = module.get<PrismaService>(PrismaService);
@@ -128,7 +145,6 @@ describe("RssService", () => {
     service.sleep = jest.fn();
 
     service.migrateToMultiChat = jest.fn();
-
     jest.clearAllMocks();
   });
 
@@ -152,17 +168,16 @@ describe("RssService", () => {
       // @ts-ignore
       axios.get.mockResolvedValue(db_result);
 
-      jest.spyOn(telegramService, "sendRss");
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
 
       await service.handleInterval();
 
-      expect(telegramService.sendRss).toBeCalledTimes(3);
+      expect(importQueue.add).toBeCalledTimes(3);
       expect(axios.get).toBeCalledTimes(1);
       expect(axios.get).toBeCalledWith(db_result[0].link);
-      expect(telegramService.sendRss).not.toBeCalledWith(db_result[0].last);
+      expect(importQueue.add).not.toBeCalledWith(db_result[0].last);
 
       expect(service.updateFeed).toBeCalledWith({
         where: { id: db_result[0].id },
@@ -188,13 +203,12 @@ describe("RssService", () => {
       // @ts-ignore
       axios.get.mockResolvedValue(db_result);
 
-      jest.spyOn(telegramService, "sendRss");
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
 
       await service.handleInterval();
-      expect(telegramService.sendRss).toBeCalledTimes(5);
+      expect(importQueue.add).toBeCalledTimes(5);
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
@@ -221,7 +235,7 @@ describe("RssService", () => {
 
       await service.handleInterval();
 
-      expect(telegramService.sendRss).toBeCalledTimes(0);
+      expect(importQueue.add).toBeCalledTimes(0);
       expect(axios.get).toBeCalledTimes(0);
       expect(service.updateFeed).toBeCalledTimes(0);
       expect(parser.parseString).toBeCalledTimes(0);
@@ -245,7 +259,6 @@ describe("RssService", () => {
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
-      jest.spyOn(telegramService, "sendRss");
 
       await service.handleInterval();
 
@@ -274,11 +287,10 @@ describe("RssService", () => {
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
-      jest.spyOn(telegramService, "sendRss");
 
       await service.handleInterval();
 
-      expect(telegramService.sendRss).toBeCalledTimes(6);
+      expect(importQueue.add).toBeCalledTimes(6);
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
