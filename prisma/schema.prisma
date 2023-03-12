@@ -24,4 +24,5 @@ model setting {
   last_version   String
   chat_id        Int     @unique
   delay          Int
+  feed_type      String  @default("link")
 }
