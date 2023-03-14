@@ -25,3 +25,10 @@ model setting {
   chat_id        Int     @unique
   delay          Int
 }
+
+model statistic {
+  id         Int      @id @unique @default(autoincrement())
+  chat_id    Int
+  count      Int
+  created_at DateTime @default(now())
+}

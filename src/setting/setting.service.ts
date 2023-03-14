@@ -70,13 +70,7 @@ export class SettingService {
 
   async settingsChangelog() {
     const chatSettings = await this.getSettings({});
-    for (
-      let chatSettingIndex = 0;
-      chatSettingIndex < chatSettings.length;
-      chatSettingIndex++
-    ) {
-      const chatSetting = chatSettings[chatSettingIndex];
-
+    for (const chatSetting of chatSettings) {
       if (chatSetting.last_version !== packageVersion) {
         if (chatSetting.show_changelog) {
           // send changelog

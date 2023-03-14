@@ -9,6 +9,7 @@ import { SettingModule } from "./setting/setting.module";
 import { NestEmitterModule } from "nest-emitter";
 import { EventEmitter } from "events";
 import { BullModule } from "@nestjs/bull";
+import { StatisticModule } from "./statistic/statistic.module";
 import constants from "./util/constants";
 
 @Module({
@@ -21,6 +22,7 @@ import constants from "./util/constants";
     }),
     RssModule,
     SettingModule,
+    StatisticModule,
     BullModule.forRoot({
       redis: {
         host: constants.env.REDIS_HOST,
