@@ -31,15 +31,19 @@ export class StatisticService {
       }
     });
 
-    if (record) {
-      await this.prisma.statistic.update({
-        where: { id: record.id },
-        data: { count: record.count + data.count }
-      });
-    } else {
-      return this.prisma.statistic.create({
-        data
-      });
+    try {
+      if (record) {
+        await this.prisma.statistic.update({
+          where: { id: record.id },
+          data: { count: record.count + data.count }
+        });
+      } else {
+        return this.prisma.statistic.create({
+          data
+        });
+      }
+    } catch (error) {
+      console.log(error);
     }
   }
 
