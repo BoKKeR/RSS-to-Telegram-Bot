@@ -7,6 +7,7 @@ import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
 import { BullModule, getQueueToken } from "@nestjs/bull";
 import constants from "../util/constants";
+import { StatisticService } from "src/statistic/statistic.service";
 
 jest.mock("axios");
 jest.mock("rss-parser", () => {
@@ -99,6 +100,7 @@ describe("RssService", () => {
   let telegramService: TelegramService;
   let loggerService: CustomLoggerService;
   let messageQueue: BullModule;
+  let statisticService: StatisticService;
 
   const importQueue: any = {
     add: jest.fn(),
@@ -130,6 +132,12 @@ describe("RssService", () => {
             verbose: jest.fn(),
             debug: jest.fn()
           }
+        },
+        {
+          provide: StatisticService,
+          useValue: {
+            create: jest.fn()
+          }
         }
       ]
     })
@@ -141,8 +149,7 @@ describe("RssService", () => {
     prisma = module.get<PrismaService>(PrismaService);
     telegramService = module.get<TelegramService>(TelegramService);
     loggerService = module.get<CustomLoggerService>(CustomLoggerService);
-
-    service.sleep = jest.fn();
+    statisticService = module.get<StatisticService>(StatisticService);
 
     service.migrateToMultiChat = jest.fn();
     jest.clearAllMocks();
@@ -152,6 +159,7 @@ describe("RssService", () => {
     it("should update and send 3 posts", async () => {
       const db_result = [
         {
+          chat_id: -123,
           id: 1,
           link: "idk",
           name: "test",
@@ -175,6 +183,11 @@ describe("RssService", () => {
       await service.handleInterval();
 
       expect(importQueue.add).toBeCalledTimes(3);
+      expect(statisticService.create).toBeCalledTimes(1);
+      expect(statisticService.create).toBeCalledWith({
+        count: 3,
+        chat_id: db_result[0].chat_id
+      });
       expect(axios.get).toBeCalledTimes(1);
       expect(axios.get).toBeCalledWith(db_result[0].link);
       expect(importQueue.add).not.toBeCalledWith(db_result[0].last);
