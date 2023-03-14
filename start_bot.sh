@@ -18,8 +18,7 @@ if test -f "$PYTHON_LEGACY_DATABASE"; then
     mv $PYTHON_LEGACY_DATABASE $JS_DATABASE
     
     $PRISMA migrate resolve --applied init
-    $PRISMA migrate dev
-    
+    $PRISMA migrate depoy
 fi
 
 
