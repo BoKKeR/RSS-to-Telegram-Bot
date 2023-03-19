@@ -29,6 +29,41 @@ export class TelegramService {
     await this.bot.telegram.setMyCommands(commands);
   }
 
+  //function to send image to the chat
+  async sendPhoto(chatId: number, imageSrc: string, caption: string) {
+    try {
+      await this.bot.telegram.sendPhoto(
+        chatId,
+        {url: `${imageSrc}`},
+        {caption: `${caption}`, parse_mode:"HTML"}
+      );
+    } catch (error) {
+      if(error.code === 400 || error.description === "Bad Request: IMAGE_PROCESS_FAILED"){
+        caption = `No valid image\n` + caption;
+        await this.sendTitle(
+          chatId,
+          caption
+        )
+      }
+    }   
+  }
+
+  //function to send title as hyperlink
+  async sendTitle(chatId: number, message: string) {
+    try{
+      await this.bot.telegram.sendMessage(
+        chatId,
+        `${message}`,
+        {parse_mode: "HTML"}
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  
+
+  //function to send link to the chat
   async sendRss(chatId: number, link: string) {
     try {
       await this.bot.telegram.sendMessage(chatId, link);
