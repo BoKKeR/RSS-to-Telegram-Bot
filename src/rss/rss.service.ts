@@ -159,72 +159,11 @@ export class RssService implements OnModuleInit {
             const gapItem = feedItems[itemIndex];
             if (!gapItem.link) return;
 
-            if (!gapItem.link) return;
-
-            this.logger.debug("sending: " + gapItem.link);
-            await this.telegramService.sendRss(
-              currentFeed.chat_id,
-              gapItem.link
+            this.logger.debug(
+              `Adding job: ${gapItem.link} chat: ${currentFeed.chat_id}`
             );
 
-            let rssOption_image = await this.prisma.setting.findFirst({where: {feed_type:"image"}});
-            let rssOption_title = await this.prisma.setting.findFirst({where: {feed_type: "title"}});
-
-            if(rssOption_image) {
-              let regex = /<img src="([^"]*)"/;
-              let image = regex.exec(gapItem.content);
-              //send image with caption
-              try {
-                this.logger.debug("sending: " + image[1]);
-                let caption = `<a href="${gapItem.link}">${gapItem.title}</a>`
-
-                if(gapItem.creator) {
-                  caption += `\nBy ${gapItem.creator}`
-                }
-
-                await bot.telegram.sendPhoto(
-                  currentFeed.chat_id,
-                  {url: `${image[1]}`},
-                  {parse_mode: "HTML", caption}
-                )
-                //change message format when image process fails
-              } catch (error) {
-                if(error.description === "Bad Request: IMAGE_PROCESS_FAILED") {
-                  let message = `No valid image\n\n<a href="${gapItem.link}">${gapItem.title}</a>`;
-
-                  if(gapItem.creator) {
-                    message += `\nBy ${gapItem.creator}`;
-                  }
-
-                  this.logger.debug("sending: " + gapItem.link)
-                  await bot.telegram.sendMessage(
-                    currentFeed.chat_id,
-                    message,
-                    {parse_mode: "HTML"}
-                  )
-                }
-              }
-            } else if(rssOption_title){
-              this.logger.debug("sending: " + gapItem.title);
-
-              let message = `<a href="${gapItem.link}">${gapItem.title}</a>`;
-
-              if(gapItem.creator) {
-                message += `\nBy ${gapItem.creator}`;
-              }
-              
-              await bot.telegram.sendMessage(
-                currentFeed.chat_id,
-                message,
-                {parse_mode: "HTML"}
-              )
-            } else {
-              this.logger.debug("sending: " + gapItem.link);
-              await bot.telegram.sendMessage(
-                currentFeed.chat_id,
-                gapItem.link
-              )
-            }
+            await this.addJob(currentFeed.chat_id, gapItem);
 
             if (itemIndex === 0) {
               this.logger.debug("saving: " + lastItem.link);

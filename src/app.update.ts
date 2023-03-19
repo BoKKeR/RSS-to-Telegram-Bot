@@ -171,57 +171,7 @@ export class AppUpdate {
     let regex = /<img src="([^"]*)"/;
     let imageSrc = regex.exec(lastItem.content);
 
-    let setting = await this.settingService.getSettingByChatId(this.getFromChatId(ctx));
-    switch(setting.feed_type){
-      case "image":
-        try {
-          let caption = `<a href="${lastItem.link}">${lastItem.title}</a>`
-
-          if(lastItem.creator) {
-            caption += `\nBy ${lastItem.creator}`
-          }
-          await bot.telegram.sendPhoto(
-            ctx.message.chat.id,
-            {url: imageSrc[1]},
-            {caption: caption}
-          )
-        } catch (error) {
-          if(error.description === "Bad Request: IMAGE_PROCESS_FAILED"){
-            let message = `No valid image\n\n<a href="${lastItem.link}">${lastItem.title}</a>`;
-
-            if(lastItem.creator) {
-              message += `\nBy ${lastItem.creator}`;
-            }
-
-            await bot.telegram.sendMessage(
-              ctx.message.chat.id,
-              `No valid image...\n\n<a href='${lastItem.link}'>${lastItem.title}</a>`,
-              {parse_mode: "HTML"}
-            )
-          }
-        };
-        break;
-
-      case "title":
-        let message = `No valid image\n\n<a href="${lastItem.link}">${lastItem.title}</a>`;
-
-        if(lastItem.creator) {
-          message += `\nBy ${lastItem.creator}`;
-        }
-
-        await bot.telegram.sendMessage(
-          ctx.message.chat.id,
-          `<a href='${lastItem.link}'>${lastItem.title}</a>`,
-          {parse_mode: "HTML"}
-        )
-        break;
-      
-      case "link_only":
-        await bot.telegram.sendMessage(
-          ctx.message.chat.id,
-          lastItem.link
-        )
-    }
+    ctx.reply(lastItem.link);
   }
 
   @Command("disable_all")
@@ -301,7 +251,7 @@ export class AppUpdate {
       }
 
       //change feed type
-      if (key === "feed_type" && (value === "image" || value === "title" || value === "link_only")) {
+      if (key === "feed_type" && (value === "image" || value === "title" || value === "link")) {
         await this.settingService.updateSetting({
           where: {chat_id: fromId},
           data: { [key]: value}
@@ -318,7 +268,7 @@ export class AppUpdate {
       setting.show_changelog +
       "\nfeed_type=" +
       setting.feed_type +
-      "\n\nfeed_type options: image | title | link_only"
+      "\n\nfeed_type options: image | title | link"
       
 
     await ctx.replyWithMarkdown(msg.replaceAll("_", "\\_"));
