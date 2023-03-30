@@ -26,3 +26,10 @@ model setting {
   delay          Int
   feed_type      String  @default("link")
 }
+
+model statistic {
+  id         Int      @id @unique @default(autoincrement())
+  chat_id    Int
+  count      Int
+  created_at DateTime @default(now())
+}

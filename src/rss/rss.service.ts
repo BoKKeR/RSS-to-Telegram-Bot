@@ -12,14 +12,15 @@ import { Telegraf } from "telegraf";
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
 import constants from "src/util/constants";
+import { StatisticService } from "src/statistic/statistic.service";
 let parser = new Parser();
-let bot = new Telegraf(process.env.TOKEN);
 @Injectable()
 export class RssService implements OnModuleInit {
   constructor(
     @InjectQueue(constants.queue.messages) private messagesQueue: Queue,
     private prisma: PrismaService,
     private telegramService: TelegramService,
+    private statisticService: StatisticService,
     private logger: CustomLoggerService
   ) {
     this.logger.setContext("RssService");
@@ -96,10 +97,6 @@ export class RssService implements OnModuleInit {
     });
   }
 
-  async sleep() {
-    await new Promise((resolve) => setTimeout(resolve, 3500));
-  }
-
   async migrateChat(dto: { chatId: number; newChatId: number }) {
     await this.prisma.rss.updateMany({
       where: { chat_id: dto.chatId },
@@ -149,8 +146,13 @@ export class RssService implements OnModuleInit {
               ? feedItems.findIndex((item) => item.link === currentFeed.last) -
                 1
               : feedItems.length - 1;
-          this.logger.debug("new items: " + (findSavedItemIndex + 1));
+          const newItemsCount = findSavedItemIndex + 1;
+          this.logger.debug("new items: " + newItemsCount);
 
+          this.statisticService.create({
+            count: newItemsCount,
+            chat_id: currentFeed.chat_id
+          });
           for (
             let itemIndex = findSavedItemIndex;
             itemIndex > -1;
@@ -193,6 +195,15 @@ export class RssService implements OnModuleInit {
       users: users.toString(),
       disabledFeeds: disabledFeeds.length.toString()
     };
+
+    const chatStats = await this.statisticService.getStats();
+
+    const sum = chatStats
+      .sort((a, b) => b._sum.count - a._sum.count)
+      .filter((item) => item._sum.count > 1000)
+      .map((_) => `${_.chat_id}: ${_._sum.count}\n`)
+      .join("");
+
     await this.telegramService.sendAdminMessage(
       `Enabled feeds: ${stats.feeds}
 Active Users: ${stats.users}
@@ -201,16 +212,26 @@ Disabled Feeds: ${stats.disabledFeeds}
 -- Queue --
 Awaiting: ${await this.messagesQueue.count()},
 Active: ${await this.messagesQueue.getActiveCount()},
-Completed: ${await this.messagesQueue.getCompletedCount()}`
+Completed: ${await this.messagesQueue.getCompletedCount()}
+
+-- Chat stats over 1000 --
+${sum}
+`
     );
   }
 
   async addJob(chatId: number, feedItem: Parser.Item) {
     try {
-      await this.messagesQueue.add("message", {
-        chatId: chatId,
-        feedItem: feedItem
-      });
+      await this.messagesQueue.add(
+        "message",
+        {
+          chatId: chatId,
+          feedItem: feedItem
+        },
+        {
+          removeOnComplete: true
+        }
+      );
     } catch (error) {
       console.log(error);
     }

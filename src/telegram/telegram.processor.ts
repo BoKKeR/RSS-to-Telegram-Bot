@@ -119,7 +119,7 @@ export class TelegramProcessor {
     //changed it to a function, because it felt redundant and verbose in the code
     async function pauseQueue(error){
       if (error?.response?.error_code === 429) {
-        done(new Error(error.response.parameters.description));
+        done(new Error(error.response.description));
         this.logger.debug("Pausing queue");
         return await this.messagesQueue.pause();
       }

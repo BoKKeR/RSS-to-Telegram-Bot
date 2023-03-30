@@ -10,6 +10,7 @@ import { NestEmitterModule } from "nest-emitter";
 import { EventEmitter } from "events";
 import { TelegramModule } from "./telegram/telegram.module";
 import { BullModule } from "@nestjs/bull";
+import { StatisticModule } from "./statistic/statistic.module";
 import constants from "./util/constants";
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import constants from "./util/constants";
     RssModule,
     SettingModule,
     TelegramModule,
+    StatisticModule,
     BullModule.forRoot({
       redis: {
         host: constants.env.REDIS_HOST,
