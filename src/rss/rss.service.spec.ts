@@ -5,6 +5,9 @@ import * as Parser from "rss-parser";
 import axios from "axios";
 import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
+import { BullModule, getQueueToken } from "@nestjs/bull";
+import constants from "../util/constants";
+import { StatisticService } from "src/statistic/statistic.service";
 
 jest.mock("axios");
 jest.mock("rss-parser", () => {
@@ -96,9 +99,22 @@ describe("RssService", () => {
   let prisma: PrismaService;
   let telegramService: TelegramService;
   let loggerService: CustomLoggerService;
+  let messageQueue: BullModule;
+  let statisticService: StatisticService;
+
+  const importQueue: any = {
+    add: jest.fn(),
+    process: jest.fn(),
+    on: jest.fn()
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        BullModule.registerQueue({
+          name: constants.queue.messages
+        })
+      ],
       providers: [
         RssService,
         PrismaService,
@@ -116,15 +132,26 @@ describe("RssService", () => {
             verbose: jest.fn(),
             debug: jest.fn()
           }
+        },
+        {
+          provide: StatisticService,
+          useValue: {
+            create: jest.fn()
+          }
         }
       ]
-    }).compile();
+    })
+      .overrideProvider(getQueueToken(constants.queue.messages))
+      .useValue(importQueue)
+      .compile();
 
     service = module.get<RssService>(RssService);
     prisma = module.get<PrismaService>(PrismaService);
     telegramService = module.get<TelegramService>(TelegramService);
     loggerService = module.get<CustomLoggerService>(CustomLoggerService);
+    statisticService = module.get<StatisticService>(StatisticService);
 
+    service.migrateToMultiChat = jest.fn();
     jest.clearAllMocks();
   });
 
@@ -132,6 +159,8 @@ describe("RssService", () => {
     it("should update and send 3 posts", async () => {
       const db_result = [
         {
+          chat_id: -123,
+          id: 1,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/3/"
@@ -147,20 +176,24 @@ describe("RssService", () => {
       // @ts-ignore
       axios.get.mockResolvedValue(db_result);
 
-      jest.spyOn(telegramService, "sendRss");
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
 
       await service.handleInterval();
 
-      expect(telegramService.sendRss).toBeCalledTimes(3);
+      expect(importQueue.add).toBeCalledTimes(3);
+      expect(statisticService.create).toBeCalledTimes(1);
+      expect(statisticService.create).toBeCalledWith({
+        count: 3,
+        chat_id: db_result[0].chat_id
+      });
       expect(axios.get).toBeCalledTimes(1);
       expect(axios.get).toBeCalledWith(db_result[0].link);
-      expect(telegramService.sendRss).not.toBeCalledWith(db_result[0].last);
+      expect(importQueue.add).not.toBeCalledWith(db_result[0].last);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[0].name },
+        where: { id: db_result[0].id },
         data: { last: mockFeed.items[0].link }
       });
     });
@@ -168,6 +201,7 @@ describe("RssService", () => {
     it("should update and send 5 posts", async () => {
       const db_result = [
         {
+          id: 1,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/1/"
@@ -182,17 +216,16 @@ describe("RssService", () => {
       // @ts-ignore
       axios.get.mockResolvedValue(db_result);
 
-      jest.spyOn(telegramService, "sendRss");
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
 
       await service.handleInterval();
-      expect(telegramService.sendRss).toBeCalledTimes(5);
+      expect(importQueue.add).toBeCalledTimes(5);
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[0].name },
+        where: { id: db_result[0].id },
         data: { last: mockFeed.items[0].link }
       });
     });
@@ -215,7 +248,7 @@ describe("RssService", () => {
 
       await service.handleInterval();
 
-      expect(telegramService.sendRss).toBeCalledTimes(0);
+      expect(importQueue.add).toBeCalledTimes(0);
       expect(axios.get).toBeCalledTimes(0);
       expect(service.updateFeed).toBeCalledTimes(0);
       expect(parser.parseString).toBeCalledTimes(0);
@@ -239,7 +272,6 @@ describe("RssService", () => {
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
-      jest.spyOn(telegramService, "sendRss");
 
       await service.handleInterval();
 
@@ -250,6 +282,7 @@ describe("RssService", () => {
     it("new posts, but database post cant be found within them", async () => {
       const db_result = [
         {
+          id: 1,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/10/"
@@ -267,15 +300,14 @@ describe("RssService", () => {
       jest.spyOn(axios, "get");
       jest.spyOn(service, "handleInterval");
       jest.spyOn(service, "updateFeed");
-      jest.spyOn(telegramService, "sendRss");
 
       await service.handleInterval();
 
-      expect(telegramService.sendRss).toBeCalledTimes(6);
+      expect(importQueue.add).toBeCalledTimes(6);
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[0].name },
+        where: { id: db_result[0].id },
         data: { last: mockFeed.items[0].link }
       });
     });
@@ -283,11 +315,13 @@ describe("RssService", () => {
     it("update 2 different hosts and send 3 posts each", async () => {
       const db_result = [
         {
+          id: 1,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/3/"
         },
         {
+          id: 2,
           link: "idk",
           name: "test",
           last: "https://www.reddit.com/r/funny/3/"
@@ -312,11 +346,11 @@ describe("RssService", () => {
       expect(axios.get).toBeCalledWith(db_result[0].link);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[0].name },
+        where: { id: db_result[0].id },
         data: { last: mockFeed.items[0].link }
       });
       expect(service.updateFeed).toBeCalledWith({
-        where: { name: db_result[1].name },
+        where: { id: db_result[1].id },
         data: { last: mockFeed.items[0].link }
       });
     });

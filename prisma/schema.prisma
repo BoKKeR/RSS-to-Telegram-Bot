@@ -1,6 +1,7 @@
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
+  output        = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -9,8 +10,25 @@ datasource db {
 }
 
 model rss {
-  id   Int    @id @unique(map: "sqlite_autoindex_rss_1") @default(autoincrement())
-  link String @unique(map: "sqlite_autoindex_rss_2")
-  last String
-  name String @unique(map: "sqlite_autoindex_rss_3")
+  id       Int     @id @unique(map: "sqlite_autoindex_rss_1") @default(autoincrement())
+  link     String
+  last     String
+  name     String
+  chat_id  Int     @default(0)
+  disabled Boolean @default(false)
+}
+
+model setting {
+  id             Int     @id @unique @default(autoincrement())
+  show_changelog Boolean @default(true)
+  last_version   String
+  chat_id        Int     @unique
+  delay          Int
+}
+
+model statistic {
+  id         Int      @id @unique @default(autoincrement())
+  chat_id    Int
+  count      Int
+  created_at DateTime @default(now())
 }

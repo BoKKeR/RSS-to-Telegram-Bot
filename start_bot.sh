@@ -18,11 +18,10 @@ if test -f "$PYTHON_LEGACY_DATABASE"; then
     mv $PYTHON_LEGACY_DATABASE $JS_DATABASE
     
     $PRISMA migrate resolve --applied init
-    $PRISMA migrate dev
-    
+    $PRISMA migrate depoy
 fi
 
 
 $PRISMA migrate deploy
 
-node --max_old_space_size=1024 dist/main.js
+node --max_old_space_size=1024 dist/src/main.js
