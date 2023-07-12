@@ -117,9 +117,10 @@ export class RssService implements OnModuleInit {
     for (let i = 0; i < activeJobs.length; i++) {
       const job = activeJobs[i];
       if (job.data.chatId === dto.chatId) {
-        countOfActiveJobs++;
       }
     }
+
+    console.log(JSON.stringify(activeJobs[0]));
 
     console.log("DISABLED USER ACTIVE JOBS: " + countOfActiveJobs);
   }
