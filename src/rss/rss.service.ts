@@ -109,6 +109,18 @@ export class RssService implements OnModuleInit {
       where: { chat_id: dto.chatId },
       data: { disabled: dto.disable }
     });
+    const activeJobs = await this.messagesQueue.getJobs(["waiting", "delayed"]);
+
+    let countOfActiveJobs = 0;
+
+    for (let i = 0; i < activeJobs.length; i++) {
+      const job = activeJobs[i];
+      if (job.data.chatId === dto.chatId) {
+        countOfActiveJobs++;
+      }
+    }
+
+    console.log("DISABLED USER ACTIVE JOBS: " + countOfActiveJobs);
   }
 
   async disableFeed(dto: { name: string; disable: boolean }) {
