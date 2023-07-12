@@ -36,6 +36,8 @@ export class TelegramProcessor {
       );
       done();
     } catch (error) {
+      console.log(error);
+
       if (error?.response?.error_code === 429) {
         done(new Error(error.response.description));
         this.logger.debug("Pausing queue");
