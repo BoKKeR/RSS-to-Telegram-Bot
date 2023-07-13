@@ -23,6 +23,7 @@ export class TelegramProcessor {
     @InjectQueue(constants.queue.messages) private messagesQueue: Queue
   ) {}
 
+  @Process("__default__")
   @Process("message")
   async processName(
     job: Job<{ feedItem: Item; chatId: number }>,
