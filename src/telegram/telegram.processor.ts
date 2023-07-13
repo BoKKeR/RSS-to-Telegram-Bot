@@ -23,7 +23,6 @@ export class TelegramProcessor {
     @InjectQueue(constants.queue.messages) private messagesQueue: Queue
   ) {}
 
-  @Process("__default__")
   @Process("message")
   async processName(
     job: Job<{ feedItem: Item; chatId: number }>,
@@ -50,6 +49,14 @@ export class TelegramProcessor {
       winston.error(error);
       done(new Error(error));
     }
+  }
+
+  @Process("__default__")
+  async proccessDefault(
+    job: Job<{ feedItem: Item; chatId: number }>,
+    done: DoneCallback
+  ) {
+    done();
   }
 
   @OnQueueFailed()
