@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma.service";
 import { rss, Prisma } from "@prisma/client";
 import { Interval } from "@nestjs/schedule";
 import { chatid, delay } from "../util/config";
-import * as Parser from "rss-parser";
+import Parser from "rss-parser";
 import { getFeedData } from "../util/axios";
 import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
@@ -12,6 +12,9 @@ import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
 import constants from "src/util/constants";
 import { StatisticService } from "src/statistic/statistic.service";
+import { getLogger } from "src/winston";
+
+const winston = getLogger();
 
 let parser = new Parser();
 @Injectable()
@@ -24,7 +27,7 @@ export class RssService implements OnModuleInit {
     private logger: CustomLoggerService
   ) {
     this.logger.setContext("RssService");
-    this.logger.debug("DELAY: " + delay + " seconds");
+    winston.debug("DELAY: " + delay + " seconds");
   }
 
   async onModuleInit() {
@@ -145,10 +148,10 @@ export class RssService implements OnModuleInit {
         const feedItems = feed.items;
 
         const lastItem = feedItems[0];
-        this.logger.debug(
+        winston.debug(
           `\n\n-------checking feed: ${currentFeed.name}----------`
         );
-        this.logger.debug("last: " + lastItem.link);
+        winston.debug("last: " + lastItem.link);
         if (lastItem.link !== currentFeed.last) {
           const findSavedItemIndex =
             feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
@@ -156,7 +159,7 @@ export class RssService implements OnModuleInit {
                 1
               : feedItems.length - 1;
           const newItemsCount = findSavedItemIndex + 1;
-          this.logger.debug("new items: " + newItemsCount);
+          winston.debug("new items: " + newItemsCount);
 
           this.statisticService.create({
             count: newItemsCount,
@@ -170,30 +173,30 @@ export class RssService implements OnModuleInit {
             const gapItem = feedItems[itemIndex];
             if (!gapItem.link) return;
 
-            this.logger.debug(
+            winston.debug(
               `Adding job: ${gapItem.link} chat: ${currentFeed.chat_id}`
             );
             await this.addJob(currentFeed.chat_id, gapItem);
             if (itemIndex === 0) {
-              this.logger.debug("saving: " + lastItem.link);
+              winston.debug("saving: " + lastItem.link);
 
               await this.updateFeed({
                 where: { id: currentFeed.id },
                 data: { last: lastItem.link }
               });
-              this.logger.debug("Done! saving checkpoint: " + lastItem.link);
+              winston.debug("Done! saving checkpoint: " + lastItem.link);
             }
           }
         }
-        this.logger.debug("-------------done------------------");
+        winston.debug("-------------done------------------");
       } catch (error) {
-        console.log(error);
+        winston.error(error);
       }
     }
   }
 
   async getStats() {
-    this.logger.debug("getting chat stats");
+    winston.debug("getting chat stats");
     const enabledFeeds = await this.feeds({ where: { disabled: false } });
     const disabledFeeds = await this.feeds({ where: { disabled: true } });
     const users = uniqueItems(enabledFeeds, "chat_id");
@@ -245,20 +248,20 @@ ${sum}
   }
 
   async migrateToMultiChat() {
-    this.logger.debug("migrate to multichat started");
+    winston.debug("migrate to multichat started");
     const feeds = await this.feeds({});
     for (const feed of feeds) {
       if (feed.chat_id === 0 && chatid) {
-        this.logger.debug("feed for migration found");
+        winston.debug("feed for migration found");
         try {
           await this.updateFeed({
             where: { id: feed.id },
             data: { chat_id: chatid }
           });
-          this.logger.debug("feed saved");
+          winston.debug("feed saved");
         } catch (error) {
-          this.logger.debug("error saving migration");
-          this.logger.debug(JSON.stringify(error));
+          winston.debug("error saving migration");
+          winston.debug(JSON.stringify(error));
         }
       }
     }
