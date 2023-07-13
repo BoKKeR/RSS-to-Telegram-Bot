@@ -243,7 +243,7 @@ ${sum}
         }
       );
     } catch (error) {
-      console.log(error);
+      winston.error(error);
     }
   }
 

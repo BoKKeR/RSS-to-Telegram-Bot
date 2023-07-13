@@ -40,14 +40,14 @@ export class TelegramProcessor {
       );
       done();
     } catch (error) {
-      console.log(error);
+      winston.error(error);
 
       if (error?.response?.error_code === 429) {
         done(new Error(error.response.description));
         winston.debug("Pausing queue");
         return await this.messagesQueue.pause();
       }
-      console.log(error);
+      winston.error(error);
       done(new Error(error));
     }
   }
@@ -60,7 +60,7 @@ export class TelegramProcessor {
     winston.debug(
       `@OnQueueFailed ${job.id} ${job.attemptsMade} ${job.data.message}`
     );
-    console.log(error);
+    winston.error(error);
     job.retry();
   }
 

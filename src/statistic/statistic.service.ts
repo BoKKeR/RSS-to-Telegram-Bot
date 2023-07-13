@@ -1,7 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
 import { statistic, Prisma } from "@prisma/client";
+import { getLogger } from "src/winston";
 
+const winston = getLogger();
 @Injectable()
 export class StatisticService {
   constructor(private prisma: PrismaService) {}
@@ -43,7 +45,7 @@ export class StatisticService {
         });
       }
     } catch (error) {
-      console.log(error);
+      winston.error(error);
     }
   }
 
