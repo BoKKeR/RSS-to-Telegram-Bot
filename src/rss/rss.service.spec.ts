@@ -10,6 +10,13 @@ import constants from "../util/constants";
 import { StatisticService } from "src/statistic/statistic.service";
 
 jest.mock("axios");
+
+jest.mock("winston", () => ({
+  getLogger: () => ({
+    debug: jest.fn()
+  })
+}));
+
 jest.mock("rss-parser", () => {
   return jest.fn().mockImplementation(() => {
     return {
