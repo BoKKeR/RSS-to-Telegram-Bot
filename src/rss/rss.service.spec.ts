@@ -1,7 +1,7 @@
 import { RssService } from "./rss.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { PrismaService } from "../prisma.service";
-import * as Parser from "rss-parser";
+import Parser from "rss-parser";
 import axios from "axios";
 import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
