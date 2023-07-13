@@ -57,7 +57,7 @@ export class TelegramProcessor {
     done: DoneCallback
   ) {
     console.log(JSON.stringify(job));
-    //done();
+    done();
   }
 
   @OnQueueFailed()
