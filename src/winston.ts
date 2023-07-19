@@ -37,6 +37,8 @@ const initializeLogger = () => {
 
   if (process.env.DEBUG === "true") {
     logger.level = "debug";
+  } else {
+    logger.level = "info";
   }
 };
 
