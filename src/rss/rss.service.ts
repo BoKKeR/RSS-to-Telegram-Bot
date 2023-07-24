@@ -137,10 +137,15 @@ export class RssService implements OnModuleInit {
       return;
     }
 
-    for (const currentFeed of feeds) {
+    for (let currentFeed of feeds) {
       const isDevChat = currentFeed.chat_id === -1001116967488;
       try {
         let feedReq = await getFeedData(currentFeed.link);
+
+        // test fix for duplicate messages, refetch the database result
+        currentFeed = await this.feeds({
+          where: { disabled: false, chat_id: currentFeed.chat_id }
+        })[0];
 
         // @ts-ignore
         let feed = await parser.parseString(feedReq);
