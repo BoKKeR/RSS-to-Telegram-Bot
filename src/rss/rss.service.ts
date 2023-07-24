@@ -143,8 +143,8 @@ export class RssService implements OnModuleInit {
         let feedReq = await getFeedData(currentFeed.link);
 
         // test fix for duplicate messages, refetch the database result
-        currentFeed = await this.feeds({
-          where: { disabled: false, chat_id: currentFeed.chat_id }
+        let tempFeed = await this.feeds({
+          where: { id: currentFeed.id }
         })[0];
 
         // @ts-ignore
@@ -155,34 +155,33 @@ export class RssService implements OnModuleInit {
         const lastItem = feedItems[0];
         if (isDevChat) {
           winston.debug("feedItems: " + JSON.stringify(feedItems), {
-            labels: { chat_id: currentFeed.chat_id }
+            labels: { chat_id: tempFeed.chat_id }
           });
         }
-        winston.debug(`-------checking feed: ${currentFeed.name}---------- `, {
-          labels: { chat_id: currentFeed.chat_id }
+        winston.debug(`-------checking feed: ${tempFeed.name}---------- `, {
+          labels: { chat_id: tempFeed.chat_id }
         });
         winston.debug("last: " + lastItem.link, {
-          labels: { chat_id: currentFeed.chat_id }
+          labels: { chat_id: tempFeed.chat_id }
         });
-        if (lastItem.link !== currentFeed.last) {
+        if (lastItem.link !== tempFeed.last) {
           if (isDevChat) {
-            winston.debug("current feed last:" + currentFeed.last, {
-              labels: { chat_id: currentFeed.chat_id }
+            winston.debug("current feed last:" + tempFeed.last, {
+              labels: { chat_id: tempFeed.chat_id }
             });
           }
           const findSavedItemIndex =
-            feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
-              ? feedItems.findIndex((item) => item.link === currentFeed.last) -
-                1
+            feedItems.findIndex((item) => item.link === tempFeed.last) !== -1
+              ? feedItems.findIndex((item) => item.link === tempFeed.last) - 1
               : feedItems.length - 1;
           const newItemsCount = findSavedItemIndex + 1;
           winston.debug("new items: " + newItemsCount, {
-            labels: { chat_id: currentFeed.chat_id }
+            labels: { chat_id: tempFeed.chat_id }
           });
 
           this.statisticService.create({
             count: newItemsCount,
-            chat_id: currentFeed.chat_id
+            chat_id: tempFeed.chat_id
           });
           for (
             let itemIndex = findSavedItemIndex;
@@ -193,43 +192,43 @@ export class RssService implements OnModuleInit {
             if (!gapItem.link) {
               if (isDevChat) {
                 winston.debug("no gapItem link: " + JSON.stringify(gapItem), {
-                  labels: { chat_id: currentFeed.chat_id }
+                  labels: { chat_id: tempFeed.chat_id }
                 });
               }
               return;
             }
 
             winston.debug(`Adding job: ${gapItem.link}`, {
-              labels: { chat_id: currentFeed.chat_id }
+              labels: { chat_id: tempFeed.chat_id }
             });
-            await this.addJob(currentFeed.chat_id, gapItem);
+            await this.addJob(tempFeed.chat_id, gapItem);
             if (itemIndex === 0) {
               winston.debug("saving: " + lastItem.link, {
-                labels: { chat_id: currentFeed.chat_id }
+                labels: { chat_id: tempFeed.chat_id }
               });
 
               await this.updateFeed({
-                where: { id: currentFeed.id },
+                where: { id: tempFeed.id },
                 data: { last: lastItem.link }
               });
 
               if (isDevChat) {
                 const feed = await this.feeds({
-                  where: { disabled: false, id: currentFeed.id }
+                  where: { disabled: false, id: tempFeed.id }
                 });
 
                 winston.debug("saved in DB: " + JSON.stringify(feed), {
-                  labels: { chat_id: currentFeed.chat_id }
+                  labels: { chat_id: tempFeed.chat_id }
                 });
               }
               winston.debug("Done! saving checkpoint: " + lastItem.link, {
-                chaId: { chat_id: currentFeed.chat_id }
+                chaId: { chat_id: tempFeed.chat_id }
               });
             }
           }
         }
         winston.debug("-------------done------------------", {
-          labels: { chat_id: currentFeed.chat_id }
+          labels: { chat_id: tempFeed.chat_id }
         });
       } catch (error) {
         winston.error(error, { labels: { chat_id: currentFeed.chat_id } });
