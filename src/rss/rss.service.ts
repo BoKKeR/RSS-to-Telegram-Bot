@@ -138,6 +138,7 @@ export class RssService implements OnModuleInit {
     }
 
     for (const currentFeed of feeds) {
+      const isDevChat = currentFeed.chat_id === -1001116967488;
       try {
         let feedReq = await getFeedData(currentFeed.link);
 
@@ -147,6 +148,11 @@ export class RssService implements OnModuleInit {
         const feedItems = feed.items;
 
         const lastItem = feedItems[0];
+        if (isDevChat) {
+          winston.debug("feedItems: " + JSON.stringify(feedItems), {
+            labels: { chat_id: currentFeed.chat_id }
+          });
+        }
         winston.debug(`-------checking feed: ${currentFeed.name}---------- `, {
           labels: { chat_id: currentFeed.chat_id }
         });
@@ -154,6 +160,11 @@ export class RssService implements OnModuleInit {
           labels: { chat_id: currentFeed.chat_id }
         });
         if (lastItem.link !== currentFeed.last) {
+          if (isDevChat) {
+            winston.debug("current feed last:" + currentFeed.last, {
+              labels: { chat_id: currentFeed.chat_id }
+            });
+          }
           const findSavedItemIndex =
             feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
               ? feedItems.findIndex((item) => item.link === currentFeed.last) -
@@ -174,12 +185,18 @@ export class RssService implements OnModuleInit {
             itemIndex--
           ) {
             const gapItem = feedItems[itemIndex];
-            if (!gapItem.link) return;
+            if (!gapItem.link) {
+              if (isDevChat) {
+                winston.debug("no gapItem link: " + JSON.stringify(gapItem), {
+                  labels: { chat_id: currentFeed.chat_id }
+                });
+              }
+              return;
+            }
 
-            winston.debug(
-              `Adding job: ${gapItem.link} chat: ${currentFeed.chat_id}`,
-              { labels: { chat_id: currentFeed.chat_id } }
-            );
+            winston.debug(`Adding job: ${gapItem.link}`, {
+              labels: { chat_id: currentFeed.chat_id }
+            });
             await this.addJob(currentFeed.chat_id, gapItem);
             if (itemIndex === 0) {
               winston.debug("saving: " + lastItem.link, {
@@ -190,6 +207,16 @@ export class RssService implements OnModuleInit {
                 where: { id: currentFeed.id },
                 data: { last: lastItem.link }
               });
+
+              if (isDevChat) {
+                const feed = await this.feeds({
+                  where: { disabled: false, id: currentFeed.id }
+                });
+
+                winston.debug("saved in DB: " + JSON.stringify(feed), {
+                  labels: { chat_id: currentFeed.chat_id }
+                });
+              }
               winston.debug("Done! saving checkpoint: " + lastItem.link, {
                 chaId: { chat_id: currentFeed.chat_id }
               });
