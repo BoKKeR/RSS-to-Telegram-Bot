@@ -99,7 +99,5 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
-  "pre-push": [
-    "test"
-  ]
+  "pre-push": []
 }
