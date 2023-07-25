@@ -145,6 +145,12 @@ export class RssService implements OnModuleInit {
         // @ts-ignore
         let feed = await parser.parseString(feedReq);
 
+        currentFeed = (
+          await this.feeds({
+            where: { id: currentFeed.id }
+          })
+        )[0];
+
         const feedItems = feed.items;
 
         const lastItem = feedItems[0];
