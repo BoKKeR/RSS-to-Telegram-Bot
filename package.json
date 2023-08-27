@@ -21,7 +21,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "generate:image": "./scripts/generate_image.sh"
+    "generate:image": "ts-node scripts/generate_image.ts"
   },
   "dependencies": {
     "@nestjs/bull": "^0.6.3",
@@ -34,7 +34,7 @@
     "@prisma/client": "^3.15.2",
     "axios": "^0.26.1",
     "bull": "^4.10.4",
-    "carbon-now-cli": "^1.4.0",
+    "carbon-now-cli": "^2.0.0",
     "copyfiles": "^2.4.1",
     "nest-emitter": "^1.1.1",
     "nestjs-telegraf": "^2.4.0",
