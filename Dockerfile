@@ -3,7 +3,7 @@ FROM mhart/alpine-node:16 AS builder
 WORKDIR /app
 COPY . .
 RUN mkdir node_modules
-RUN npm ci
+RUN npm ci --omit=dev
 RUN npm run build
 
 FROM mhart/alpine-node:16
