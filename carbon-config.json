@@ -1,20 +1,20 @@
 {
-  "paddingVertical": "56px",
-  "paddingHorizontal": "56px",
+  "paddingVertical": "30px",
+  "paddingHorizontal": "39px",
   "backgroundImage": null,
   "backgroundImageSelection": null,
-  "backgroundMode": "color",
+  "backgroundMode": "image",
   "backgroundColor": "rgba(74,144,226,1)",
-  "dropShadow": true,
+  "dropShadow": false,
   "dropShadowOffsetY": "20px",
   "dropShadowBlurRadius": "68px",
-  "theme": "verminal",
+  "theme": "base16-dark",
   "windowTheme": "none",
   "language": "markdown",
-  "fontFamily": "Hack",
-  "fontSize": "14px",
-  "lineHeight": "133%",
-  "windowControls": true,
+  "fontFamily": "OpenSans-VariableFont_wdth,wght",
+  "fontSize": "14.5px",
+  "lineHeight": "135%",
+  "windowControls": false,
   "widthAdjustment": false,
   "lineNumbers": false,
   "firstLineNumber": 1,
@@ -23,5 +23,9 @@
   "squaredImage": false,
   "hiddenCharacters": false,
   "name": "",
-  "width": 702
+  "width": 789,
+  "highlights": {
+    "background": "rgba(40,55,66,1)",
+    "text": "rgba(255,255,255,1)"
+  }
 }
