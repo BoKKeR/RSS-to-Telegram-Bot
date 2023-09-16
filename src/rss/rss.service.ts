@@ -1,7 +1,6 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { rss, Prisma } from "@prisma/client";
-import { Interval } from "@nestjs/schedule";
 import { chatid, delay } from "../util/config";
 import Parser from "rss-parser";
 import { getFeedData } from "../util/axios";
@@ -21,6 +20,8 @@ let parser = new Parser();
 export class RssService implements OnModuleInit {
   constructor(
     @InjectQueue(constants.queue.messages) private messagesQueue: Queue,
+    @InjectQueue(constants.queue.repeatableFeed)
+    private repeatableFeedQueue: Queue,
     private prisma: PrismaService,
     private telegramService: TelegramService,
     private statisticService: StatisticService,
@@ -32,7 +33,65 @@ export class RssService implements OnModuleInit {
 
   async onModuleInit() {
     await this.migrateToMultiChat();
-    this.messagesQueue.resume();
+    await this.syncRepeatableJobs();
+    await this.messagesQueue.resume();
+  }
+
+  every = 300000;
+
+  getJobId = (feed: rss) => {
+    return `feed=${feed.id}&chat_id=${feed.chat_id}`;
+  };
+
+  async syncRepeatableJobs() {
+    let repeatableJobs = await this.repeatableFeedQueue.getRepeatableJobs();
+
+    const feeds = await this.feeds({ where: { disabled: false } });
+
+    const wantedFeeds = feeds.map((feed) => ({
+      ...feed,
+      key: this.getJobId(feed)
+    }));
+
+    const checkedJobs: Parser.Item & { key: string }[] = [];
+
+    // check if existing jobs have unwanted extra job
+    for (const existingJob of repeatableJobs) {
+      const isUnwantedJob = !wantedFeeds.some((wantedJob) => {
+        return existingJob.key.includes(wantedJob.key);
+      });
+
+      if (isUnwantedJob) {
+        this.logger.debug("Removed " + existingJob.key);
+        await this.repeatableFeedQueue.removeRepeatableByKey(existingJob.key);
+      } else {
+        checkedJobs.push(existingJob);
+      }
+    }
+
+    // check if wanted jobs are missing
+    for (const wantedFeed of wantedFeeds) {
+      const isMissingJob = !checkedJobs.some((job) =>
+        job.key.includes(wantedFeed.key)
+      );
+
+      if (isMissingJob) {
+        this.logger.debug(`Adding missing ${wantedFeed.key}`);
+        await this.addRepeatableFeedJob(wantedFeed);
+      }
+    }
+  }
+
+  async addRepeatableFeedJob(rss: rss) {
+    await this.repeatableFeedQueue.add(
+      "feed",
+      { ...rss },
+      {
+        jobId: this.getJobId(rss),
+        repeat: { every: this.every },
+        removeOnComplete: true
+      }
+    );
   }
 
   async feed(
@@ -75,10 +134,12 @@ export class RssService implements OnModuleInit {
     data: Prisma.rssUpdateInput;
   }): Promise<rss> {
     const { where, data } = params;
-    return this.prisma.rss.update({
+    const result = await this.prisma.rss.update({
       data,
       where
     });
+    await this.syncRepeatableJobs();
+    return result;
   }
 
   async deleteFeed(chatId: number, name: string): Promise<rss> {
@@ -90,14 +151,12 @@ export class RssService implements OnModuleInit {
     });
 
     if (result) {
-      return await this.prisma.rss.delete({ where: { id: result.id } });
+      const deletedFeed = await this.prisma.rss.delete({
+        where: { id: result.id }
+      });
+      await this.syncRepeatableJobs();
+      return deletedFeed;
     }
-  }
-
-  async deleteOne(where: Prisma.rssWhereUniqueInput): Promise<rss> {
-    return this.prisma.rss.delete({
-      where
-    });
   }
 
   async migrateChat(dto: { chatId: number; newChatId: number }) {
@@ -120,6 +179,7 @@ export class RssService implements OnModuleInit {
         job.remove();
       }
     }
+    await this.syncRepeatableJobs();
   }
 
   async disableFeed(dto: { name: string; disable: boolean }) {
@@ -127,114 +187,101 @@ export class RssService implements OnModuleInit {
       where: { name: dto.name },
       data: { disabled: dto.disable }
     });
+    await this.syncRepeatableJobs();
   }
 
-  @Interval(delay * 1000)
-  async handleInterval() {
-    const feeds = await this.feeds({ where: { disabled: false } });
+  async processFeedJob(rss: rss) {
+    const isDevChat = rss.chat_id === parseInt(process.env.DEV_CHAT);
+    try {
+      let feedReq = await getFeedData(rss.link);
 
-    if (feeds.length === 0) {
-      return;
-    }
+      // @ts-ignore
+      let feed = await parser.parseString(feedReq);
 
-    for (let currentFeed of feeds) {
-      const isDevChat = currentFeed.chat_id === -1001116967488;
-      try {
-        let feedReq = await getFeedData(currentFeed.link);
+      // workaround for double msges
+      rss = (
+        await this.feeds({
+          where: { id: rss.id }
+        })
+      )[0];
+      const feedItems = feed.items;
 
-        // @ts-ignore
-        let feed = await parser.parseString(feedReq);
-
-        currentFeed = (
-          await this.feeds({
-            where: { id: currentFeed.id }
-          })
-        )[0];
-
-        const feedItems = feed.items;
-
-        const lastItem = feedItems[0];
+      const lastItem = feedItems[0];
+      // if (isDevChat) {
+      //   winston.debug("feedItems: " + JSON.stringify(feedItems), {
+      //     labels: { chat_id: rss.chat_id }
+      //   });
+      // }
+      winston.debug(`-------checking feed: ${rss.name}---------- `, {
+        labels: { chat_id: rss.chat_id }
+      });
+      winston.debug("last: " + lastItem.link, {
+        labels: { chat_id: rss.chat_id }
+      });
+      if (lastItem.link !== rss.last) {
         if (isDevChat) {
-          winston.debug("feedItems: " + JSON.stringify(feedItems), {
-            labels: { chat_id: currentFeed.chat_id }
+          winston.debug("current feed last:" + rss.last, {
+            labels: { chat_id: rss.chat_id }
           });
         }
-        winston.debug(`-------checking feed: ${currentFeed.name}---------- `, {
-          labels: { chat_id: currentFeed.chat_id }
+        const findSavedItemIndex =
+          feedItems.findIndex((item) => item.link === rss.last) !== -1
+            ? feedItems.findIndex((item) => item.link === rss.last) - 1
+            : feedItems.length - 1;
+        const newItemsCount = findSavedItemIndex + 1;
+        winston.debug("new items: " + newItemsCount, {
+          labels: { chat_id: rss.chat_id }
         });
-        winston.debug("last: " + lastItem.link, {
-          labels: { chat_id: currentFeed.chat_id }
+
+        this.statisticService.create({
+          count: newItemsCount,
+          chat_id: rss.chat_id
         });
-        if (lastItem.link !== currentFeed.last) {
-          if (isDevChat) {
-            winston.debug("current feed last:" + currentFeed.last, {
-              labels: { chat_id: currentFeed.chat_id }
-            });
+        for (let itemIndex = findSavedItemIndex; itemIndex > -1; itemIndex--) {
+          const gapItem = feedItems[itemIndex];
+          if (!gapItem.link) {
+            if (isDevChat) {
+              winston.debug("no gapItem link: " + JSON.stringify(gapItem), {
+                labels: { chat_id: rss.chat_id }
+              });
+            }
+            return;
           }
-          const findSavedItemIndex =
-            feedItems.findIndex((item) => item.link === currentFeed.last) !== -1
-              ? feedItems.findIndex((item) => item.link === currentFeed.last) -
-                1
-              : feedItems.length - 1;
-          const newItemsCount = findSavedItemIndex + 1;
-          winston.debug("new items: " + newItemsCount, {
-            labels: { chat_id: currentFeed.chat_id }
-          });
 
-          this.statisticService.create({
-            count: newItemsCount,
-            chat_id: currentFeed.chat_id
+          winston.debug(`Adding job: ${gapItem.link}`, {
+            labels: { chat_id: rss.chat_id }
           });
-          for (
-            let itemIndex = findSavedItemIndex;
-            itemIndex > -1;
-            itemIndex--
-          ) {
-            const gapItem = feedItems[itemIndex];
-            if (!gapItem.link) {
-              if (isDevChat) {
-                winston.debug("no gapItem link: " + JSON.stringify(gapItem), {
-                  labels: { chat_id: currentFeed.chat_id }
-                });
-              }
-              return;
-            }
-
-            winston.debug(`Adding job: ${gapItem.link}`, {
-              labels: { chat_id: currentFeed.chat_id }
+          await this.addMessageJob(rss.chat_id, gapItem);
+          if (itemIndex === 0) {
+            winston.debug("saving: " + lastItem.link, {
+              labels: { chat_id: rss.chat_id }
             });
-            await this.addJob(currentFeed.chat_id, gapItem);
-            if (itemIndex === 0) {
-              winston.debug("saving: " + lastItem.link, {
-                labels: { chat_id: currentFeed.chat_id }
+
+            await this.updateFeed({
+              where: { id: rss.id },
+              data: { last: lastItem.link }
+            });
+
+            if (isDevChat) {
+              const feed = await this.feeds({
+                where: { disabled: false, id: rss.id }
               });
 
-              await this.updateFeed({
-                where: { id: currentFeed.id },
-                data: { last: lastItem.link }
-              });
-
-              if (isDevChat) {
-                const feed = await this.feeds({
-                  where: { disabled: false, id: currentFeed.id }
-                });
-
-                winston.debug("saved in DB: " + JSON.stringify(feed), {
-                  labels: { chat_id: currentFeed.chat_id }
-                });
-              }
-              winston.debug("Done! saving checkpoint: " + lastItem.link, {
-                chaId: { chat_id: currentFeed.chat_id }
+              winston.debug("saved in DB: " + JSON.stringify(feed), {
+                labels: { chat_id: rss.chat_id }
               });
             }
+            winston.debug("Done! saving checkpoint: " + lastItem.link, {
+              chaId: { chat_id: rss.chat_id }
+            });
           }
         }
-        winston.debug("-------------done------------------", {
-          labels: { chat_id: currentFeed.chat_id }
-        });
-      } catch (error) {
-        winston.error(error, { labels: { chat_id: currentFeed.chat_id } });
       }
+      winston.debug("-------------done------------------", {
+        labels: { chat_id: rss.chat_id }
+      });
+    } catch (error) {
+      winston.error(error, { labels: { chat_id: rss.chat_id } });
     }
   }
 
@@ -273,7 +320,7 @@ ${sum}
     );
   }
 
-  async addJob(chatId: number, feedItem: Parser.Item) {
+  async addMessageJob(chatId: number, feedItem: Parser.Item) {
     try {
       await this.messagesQueue.add(
         "message",
