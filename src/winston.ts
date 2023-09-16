@@ -7,8 +7,27 @@ const initializeLogger = () => {
   if (logger) {
     return;
   }
-  logger = createLogger({
-    transports: [
+
+  const baseTransports: any = [
+    new transports.Console({
+      format: format.combine(
+        format.errors({ stack: true }),
+        format.colorize(),
+        format.timestamp(),
+        format.printf((info) => {
+          const { timestamp, level, message, ...args } = info;
+
+          const ts = timestamp.slice(0, 19).replace("T", " ");
+          return `${ts} [${level}]: ${message} ${
+            Object.keys(args).length ? JSON.stringify(args, null, 2) : ""
+          }`;
+        })
+      )
+    })
+  ];
+
+  if (process.env.LOKI_HOST && process.env.LOKI_APP) {
+    baseTransports.push(
       new LokiTransport({
         host: process.env.LOKI_HOST,
         labels: { app: process.env.LOKI_APP },
@@ -16,23 +35,12 @@ const initializeLogger = () => {
         format: format.json(),
         replaceTimestamp: true,
         onConnectionError: (err) => console.error(err)
-      }),
-      new transports.Console({
-        format: format.combine(
-          format.errors({ stack: true }),
-          format.colorize(),
-          format.timestamp(),
-          format.printf((info) => {
-            const { timestamp, level, message, ...args } = info;
-
-            const ts = timestamp.slice(0, 19).replace("T", " ");
-            return `${ts} [${level}]: ${message} ${
-              Object.keys(args).length ? JSON.stringify(args, null, 2) : ""
-            }`;
-          })
-        )
       })
-    ]
+    );
+  }
+
+  logger = createLogger({
+    transports: baseTransports
   });
 
   if (process.env.DEBUG === "true") {
