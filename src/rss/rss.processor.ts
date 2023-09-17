@@ -6,7 +6,7 @@ import {
   OnGlobalQueuePaused,
   InjectQueue
 } from "@nestjs/bull";
-import { DoneCallback, Job, Queue } from "bull";
+import { DoneCallback, FailedEventCallback, Job, Queue } from "bull";
 import constants from "src/util/constants";
 
 import { RssService } from "./rss.service";
@@ -24,7 +24,11 @@ export class RssProcessor {
   ) {}
 
   @Process("feed")
-  async processName(job: Job<rss>, done: DoneCallback) {
+  async processName(
+    job: Job<rss>,
+    done: DoneCallback,
+    fail: FailedEventCallback
+  ) {
     winston.debug(
       `@RepeatableProcess id:${job.id} attempts:${job.attemptsMade} feedlink:${job.data.link}`
     );
@@ -36,7 +40,7 @@ export class RssProcessor {
       winston.error(error);
 
       if (error?.message === "FEED_FAILURE") {
-        fail(new Error(error.message));
+        fail(job, error.message);
       }
       winston.error(error);
       done(new Error(error));
