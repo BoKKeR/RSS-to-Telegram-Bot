@@ -187,7 +187,7 @@ export class RssService implements OnModuleInit {
   async disableFeed(dto: { name: string; disable: boolean; chatId: number }) {
     await this.prisma.rss.updateMany({
       where: { name: dto.name, chat_id: dto.chatId },
-      data: { disabled: dto.disable }
+      data: { disabled: dto.disable, failures: JSON.stringify([]) }
     });
     await this.syncRepeatableJobs();
   }
