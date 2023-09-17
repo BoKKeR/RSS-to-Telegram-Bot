@@ -35,10 +35,8 @@ export class RssProcessor {
     } catch (error) {
       winston.error(error);
 
-      if (error?.response?.error_code === 429) {
-        done(new Error(error.response.description));
-        winston.debug("Pausing queue");
-        return await this.repeatableFeedQueue.pause();
+      if (error?.message === "FEED_FAILURE") {
+        fail(new Error(error.message));
       }
       winston.error(error);
       done(new Error(error));

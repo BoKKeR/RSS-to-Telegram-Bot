@@ -12,6 +12,7 @@ import { Queue } from "bull";
 import constants from "src/util/constants";
 import { StatisticService } from "src/statistic/statistic.service";
 import { getLogger } from "src/winston";
+import { DateTime } from "luxon";
 
 const winston = getLogger();
 
@@ -89,7 +90,8 @@ export class RssService implements OnModuleInit {
       {
         jobId: this.getJobId(rss),
         repeat: { every: this.every },
-        removeOnComplete: true
+        removeOnComplete: true,
+        removeOnFail: true
       }
     );
   }
@@ -182,9 +184,9 @@ export class RssService implements OnModuleInit {
     await this.syncRepeatableJobs();
   }
 
-  async disableFeed(dto: { name: string; disable: boolean }) {
+  async disableFeed(dto: { name: string; disable: boolean; chatId: number }) {
     await this.prisma.rss.updateMany({
-      where: { name: dto.name },
+      where: { name: dto.name, chat_id: dto.chatId },
       data: { disabled: dto.disable }
     });
     await this.syncRepeatableJobs();
@@ -204,14 +206,15 @@ export class RssService implements OnModuleInit {
           where: { id: rss.id }
         })
       )[0];
+
       const feedItems = feed.items;
 
       const lastItem = feedItems[0];
-      // if (isDevChat) {
-      //   winston.debug("feedItems: " + JSON.stringify(feedItems), {
-      //     labels: { chat_id: rss.chat_id }
-      //   });
-      // }
+      if (isDevChat) {
+        winston.debug("feedItems: " + JSON.stringify(feedItems), {
+          labels: { chat_id: rss.chat_id }
+        });
+      }
       winston.debug(`-------checking feed: ${rss.name}---------- `, {
         labels: { chat_id: rss.chat_id }
       });
@@ -280,6 +283,42 @@ export class RssService implements OnModuleInit {
       winston.debug("-------------done------------------", {
         labels: { chat_id: rss.chat_id }
       });
+    } catch (error) {
+      await this.handleFeedFailure(rss, error);
+      winston.error(error, { labels: { chat_id: rss.chat_id } });
+    }
+  }
+
+  async handleFeedFailure(rss: rss, error) {
+    try {
+      const updatedRss = (
+        await this.feeds({
+          where: { id: rss.id }
+        })
+      )[0];
+
+      let failures = [];
+
+      if (updatedRss.failures) {
+        failures = JSON.parse(updatedRss.failures);
+      }
+
+      failures.push({
+        [DateTime.now().toFormat("yyyy-MM-dd TT")]: error.message
+      });
+      await this.updateFeed({
+        where: { id: updatedRss.id },
+        data: { failures: JSON.stringify(failures) }
+      });
+
+      if (failures.length >= 10) {
+        await this.disableFeed({
+          chatId: rss.chat_id,
+          name: rss.name,
+          disable: true
+        });
+        throw new Error("FEED_FAILURE");
+      }
     } catch (error) {
       winston.error(error, { labels: { chat_id: rss.chat_id } });
     }
