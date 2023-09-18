@@ -6,57 +6,45 @@ import {
   OnGlobalQueuePaused,
   InjectQueue
 } from "@nestjs/bull";
-import { DoneCallback, Job, Queue } from "bull";
+import { DoneCallback, FailedEventCallback, Job, Queue } from "bull";
 import constants from "src/util/constants";
 
-import { TelegramService } from "./telegram.service";
-import { Item } from "rss-parser";
+import { RssService } from "./rss.service";
 import { getLogger } from "src/winston";
+import { rss } from "@prisma/client";
 
 const winston = getLogger();
 
-@Processor(constants.queue.messages)
-export class TelegramProcessor {
+@Processor(constants.queue.repeatableFeed)
+export class RssProcessor {
   constructor(
-    private readonly telegramService: TelegramService,
-    @InjectQueue(constants.queue.messages) private messagesQueue: Queue
+    private readonly rssService: RssService,
+    @InjectQueue(constants.queue.repeatableFeed)
+    private repeatableFeedQueue: Queue
   ) {}
 
-  @Process("message")
+  @Process("feed")
   async processName(
-    job: Job<{ feedItem: Item; chatId: number }>,
-    done: DoneCallback
+    job: Job<rss>,
+    done: DoneCallback,
+    fail: FailedEventCallback
   ) {
     winston.debug(
-      `@Process id:${job.id} attempts:${job.attemptsMade} message:${job.data.feedItem.link}`
+      `@RepeatableProcess id:${job.id} attempts:${job.attemptsMade} feedlink:${job.data.link}`
     );
 
     try {
-      await this.telegramService.sendRss(
-        job.data.chatId,
-        job.data.feedItem.link
-      );
+      await this.rssService.processFeedJob(job.data);
       done();
     } catch (error) {
       winston.error(error);
 
-      if (error?.response?.error_code === 429) {
-        done(new Error(error.response.description));
-        winston.debug("Pausing queue");
-        return await this.messagesQueue.pause();
+      if (error?.message === "FEED_FAILURE") {
+        fail(job, error.message);
       }
       winston.error(error);
       done(new Error(error));
     }
-  }
-
-  @Process("__default__")
-  async proccessDefault(
-    job: Job<{ feedItem: Item; chatId: number }>,
-    done: DoneCallback
-  ) {
-    console.log(JSON.stringify(job));
-    done();
   }
 
   @OnQueueFailed()
@@ -82,7 +70,7 @@ export class TelegramProcessor {
   async paused() {
     winston.debug("@OnGlobalQueuePaused");
     await new Promise((r) => setTimeout(r, 60000));
-    this.messagesQueue.resume();
+    this.repeatableFeedQueue.resume();
     winston.debug("Resumed Queue");
   }
 }

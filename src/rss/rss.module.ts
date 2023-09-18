@@ -7,6 +7,7 @@ import { PrismaService } from "../prisma.service";
 import { TelegramModule } from "../telegram/telegram.module";
 import { RssEventHandler } from "./rss.event.handler";
 import { RssService } from "./rss.service";
+import { RssProcessor } from "./rss.processor";
 
 @Module({
   imports: [
@@ -15,10 +16,13 @@ import { RssService } from "./rss.service";
     CustomLoggerModule,
     BullModule.registerQueue({
       name: constants.queue.messages
+    }),
+    BullModule.registerQueue({
+      name: constants.queue.repeatableFeed
     })
   ],
   controllers: [],
-  providers: [RssService, PrismaService, RssEventHandler],
+  providers: [RssService, PrismaService, RssEventHandler, RssProcessor],
   exports: [RssService]
 })
 export class RssModule {}

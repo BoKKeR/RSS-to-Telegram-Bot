@@ -170,9 +170,7 @@ export class AppUpdate {
   @Command("disable_all")
   async onDisableAll(ctx: Context) {
     const fromId = this.getFromChatId(ctx);
-    const entries = this.getMessage(ctx)
-      .replace("/disable_all ", "")
-      .split(" ");
+    const entries = this.getMessage(ctx).split(" ");
     if (!entries.length) {
       await ctx.reply(
         "ERROR: wrong input, correct syntax: \n/disable_all true/false"
@@ -180,7 +178,7 @@ export class AppUpdate {
       return;
     }
 
-    const disable = toBoolean(entries[0]);
+    const disable = toBoolean(entries[1]);
 
     this.emitter.emit("disableAllFeeds", { chatId: fromId, disable: disable });
     await ctx.reply("All feeds set to disable: " + disable);
@@ -188,16 +186,16 @@ export class AppUpdate {
 
   @Command("disable")
   async onDisableFeed(ctx: Context) {
-    const entries = this.getMessage(ctx).replace("/disable ", "").split(" ");
-    if (entries.length !== 2) {
+    const entries = this.getMessage(ctx).split(" ");
+    if (entries.length !== 3) {
       await ctx.reply(
         "ERROR: wrong input, correct syntax: \n/disable feedName true/false"
       );
       return;
     }
 
-    const feedName = entries[0];
-    const disable = toBoolean(entries[1]);
+    const feedName = entries[1];
+    const disable = toBoolean(entries[2]);
 
     const chatId = this.getFromChatId(ctx);
     this.emitter.emit("disableFeed", {

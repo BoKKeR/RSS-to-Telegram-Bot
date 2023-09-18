@@ -16,6 +16,7 @@ model rss {
   name     String
   chat_id  Int     @default(0)
   disabled Boolean @default(false)
+  failures String  @default("[]")
 }
 
 model setting {

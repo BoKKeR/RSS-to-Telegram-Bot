@@ -1,7 +1,7 @@
 import { RssService } from "./rss.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { PrismaService } from "../prisma.service";
-import * as Parser from "rss-parser";
+import Parser from "rss-parser";
 import axios from "axios";
 import { TelegramService } from "../telegram/telegram.service";
 import { CustomLoggerService } from "../logger/logger.service";
@@ -10,6 +10,13 @@ import constants from "../util/constants";
 import { StatisticService } from "src/statistic/statistic.service";
 
 jest.mock("axios");
+
+jest.mock("winston", () => ({
+  getLogger: () => ({
+    debug: jest.fn()
+  })
+}));
+
 jest.mock("rss-parser", () => {
   return jest.fn().mockImplementation(() => {
     return {
@@ -100,6 +107,7 @@ describe("RssService", () => {
   let telegramService: TelegramService;
   let loggerService: CustomLoggerService;
   let messageQueue: BullModule;
+  let repeatableFeed: BullModule;
   let statisticService: StatisticService;
 
   const importQueue: any = {
@@ -113,6 +121,9 @@ describe("RssService", () => {
       imports: [
         BullModule.registerQueue({
           name: constants.queue.messages
+        }),
+        BullModule.registerQueue({
+          name: constants.queue.repeatableFeed
         })
       ],
       providers: [
@@ -155,202 +166,126 @@ describe("RssService", () => {
     jest.clearAllMocks();
   });
 
-  describe("handleInterval", () => {
+  describe("processFeedJob", () => {
     it("should update and send 3 posts", async () => {
-      const db_result = [
-        {
-          chat_id: -123,
-          id: 1,
-          link: "idk",
-          name: "test",
-          last: "https://www.reddit.com/r/funny/3/"
-        }
-      ];
+      const rss = {
+        chat_id: -123,
+        id: 1,
+        link: "idk",
+        name: "test",
+        disabled: false,
+        last: "https://www.reddit.com/r/funny/3/"
+      };
 
       // need to do this as I cant hoist any variables on the top of the file
       const mockFeed = await new Parser().parseString("");
-
-      prisma.rss.findMany = jest.fn().mockReturnValue(db_result);
-      prisma.rss.update = jest.fn();
+      prisma.rss.findMany = jest.fn().mockReturnValue([rss]);
 
       // @ts-ignore
-      axios.get.mockResolvedValue(db_result);
+      axios.get.mockResolvedValue(rss);
 
       jest.spyOn(axios, "get");
-      jest.spyOn(service, "handleInterval");
+      jest.spyOn(service, "processFeedJob");
       jest.spyOn(service, "updateFeed");
 
-      await service.handleInterval();
+      await service.processFeedJob(rss);
 
       expect(importQueue.add).toBeCalledTimes(3);
       expect(statisticService.create).toBeCalledTimes(1);
       expect(statisticService.create).toBeCalledWith({
         count: 3,
-        chat_id: db_result[0].chat_id
+        chat_id: rss.chat_id
       });
       expect(axios.get).toBeCalledTimes(1);
-      expect(axios.get).toBeCalledWith(db_result[0].link);
-      expect(importQueue.add).not.toBeCalledWith(db_result[0].last);
+      expect(axios.get).toBeCalledWith(rss.link);
+      expect(importQueue.add).not.toBeCalledWith(rss.last);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { id: db_result[0].id },
+        where: { id: rss.id },
         data: { last: mockFeed.items[0].link }
       });
     });
 
     it("should update and send 5 posts", async () => {
-      const db_result = [
-        {
-          id: 1,
-          link: "idk",
-          name: "test",
-          last: "https://www.reddit.com/r/funny/1/"
-        }
-      ];
+      const rss = {
+        id: 1,
+        link: "idk",
+        name: "test",
+        last: "https://www.reddit.com/r/funny/1/"
+      };
       // need to do this as I cant hoist any variables on the top of the file
       const mockFeed = await new Parser().parseString("");
-
-      prisma.rss.findMany = jest.fn().mockReturnValue(db_result);
-      prisma.rss.update = jest.fn();
+      prisma.rss.findMany = jest.fn().mockReturnValue([rss]);
 
       // @ts-ignore
-      axios.get.mockResolvedValue(db_result);
+      axios.get.mockResolvedValue(rss);
 
       jest.spyOn(axios, "get");
-      jest.spyOn(service, "handleInterval");
+      jest.spyOn(service, "processFeedJob");
       jest.spyOn(service, "updateFeed");
 
-      await service.handleInterval();
+      // @ts-ignore
+      await service.processFeedJob(rss);
       expect(importQueue.add).toBeCalledTimes(5);
-      expect(axios.get).toBeCalledWith(db_result[0].link);
+      expect(axios.get).toBeCalledWith(rss.link);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { id: db_result[0].id },
+        where: { id: rss.id },
         data: { last: mockFeed.items[0].link }
       });
     });
 
-    it("empty database", async () => {
-      const db_result = [];
-
-      prisma.rss.findMany = jest.fn().mockReturnValue(db_result);
-      prisma.rss.update = jest.fn();
-
-      // @ts-ignore
-      axios.get.mockResolvedValue(db_result);
-
-      const parser = new Parser();
-      jest.spyOn(telegramService, "sendRss");
-      jest.spyOn(service, "handleInterval");
-      jest.spyOn(service, "updateFeed");
-      jest.spyOn(parser, "parseString");
-      jest.spyOn(axios, "get");
-
-      await service.handleInterval();
-
-      expect(importQueue.add).toBeCalledTimes(0);
-      expect(axios.get).toBeCalledTimes(0);
-      expect(service.updateFeed).toBeCalledTimes(0);
-      expect(parser.parseString).toBeCalledTimes(0);
-    });
-
     it("no new posts, should not call", async () => {
-      const db_result = [
-        {
-          link: "idk",
-          name: "test",
-          last: "https://www.reddit.com/r/funny/6/"
-        }
-      ];
+      const rss = {
+        link: "idk",
+        name: "test",
+        last: "https://www.reddit.com/r/funny/6/"
+      };
 
-      prisma.rss.findMany = jest.fn().mockReturnValue(db_result);
+      prisma.rss.findMany = jest.fn().mockReturnValue([rss]);
       prisma.rss.update = jest.fn();
 
       // @ts-ignore
-      axios.get.mockResolvedValue(db_result);
+      axios.get.mockResolvedValue(rss);
 
       jest.spyOn(axios, "get");
-      jest.spyOn(service, "handleInterval");
+      jest.spyOn(service, "processFeedJob");
       jest.spyOn(service, "updateFeed");
 
-      await service.handleInterval();
+      // @ts-ignore
+      await service.processFeedJob(rss);
 
-      expect(axios.get).toBeCalledWith(db_result[0].link);
+      expect(axios.get).toBeCalledWith(rss.link);
       expect(service.updateFeed).toBeCalledTimes(0);
     });
 
     it("new posts, but database post cant be found within them", async () => {
-      const db_result = [
-        {
-          id: 1,
-          link: "idk",
-          name: "test",
-          last: "https://www.reddit.com/r/funny/10/"
-        }
-      ];
+      const rss = {
+        id: 1,
+        link: "idk",
+        name: "test",
+        last: "https://www.reddit.com/r/funny/10/"
+      };
+
       // need to do this as I cant hoist any variables on the top of the file
       const mockFeed = await new Parser().parseString("");
-
-      prisma.rss.findMany = jest.fn().mockReturnValue(db_result);
-      prisma.rss.update = jest.fn();
+      prisma.rss.findMany = jest.fn().mockReturnValue([rss]);
 
       // @ts-ignore
-      axios.get.mockResolvedValue(db_result);
+      axios.get.mockResolvedValue(rss);
 
       jest.spyOn(axios, "get");
-      jest.spyOn(service, "handleInterval");
+      jest.spyOn(service, "processFeedJob");
       jest.spyOn(service, "updateFeed");
 
-      await service.handleInterval();
+      // @ts-ignore
+      await service.processFeedJob(rss);
 
       expect(importQueue.add).toBeCalledTimes(6);
-      expect(axios.get).toBeCalledWith(db_result[0].link);
+      expect(axios.get).toBeCalledWith(rss.link);
 
       expect(service.updateFeed).toBeCalledWith({
-        where: { id: db_result[0].id },
-        data: { last: mockFeed.items[0].link }
-      });
-    });
-
-    it("update 2 different hosts and send 3 posts each", async () => {
-      const db_result = [
-        {
-          id: 1,
-          link: "idk",
-          name: "test",
-          last: "https://www.reddit.com/r/funny/3/"
-        },
-        {
-          id: 2,
-          link: "idk",
-          name: "test",
-          last: "https://www.reddit.com/r/funny/3/"
-        }
-      ];
-      // need to do this as I cant hoist any variables on the top of the file
-      const mockFeed = await new Parser().parseString("");
-
-      prisma.rss.findMany = jest.fn().mockReturnValue(db_result);
-      prisma.rss.update = jest.fn();
-
-      // @ts-ignore
-      axios.get.mockResolvedValue(db_result);
-
-      jest.spyOn(axios, "get");
-      jest.spyOn(service, "handleInterval");
-      jest.spyOn(service, "updateFeed");
-
-      await service.handleInterval();
-
-      expect(axios.get).toBeCalledTimes(2);
-      expect(axios.get).toBeCalledWith(db_result[0].link);
-
-      expect(service.updateFeed).toBeCalledWith({
-        where: { id: db_result[0].id },
-        data: { last: mockFeed.items[0].link }
-      });
-      expect(service.updateFeed).toBeCalledWith({
-        where: { id: db_result[1].id },
+        where: { id: rss.id },
         data: { last: mockFeed.items[0].link }
       });
     });

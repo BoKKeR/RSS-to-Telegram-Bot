@@ -8,7 +8,8 @@ const env = {
 };
 
 const queue = {
-  messages: `messages_${env.REDIS_MUTEX}`
+  messages: `messages_${env.REDIS_MUTEX}`,
+  repeatableFeed: `repeatableFeed_${env.REDIS_MUTEX}`
 };
 
 export default { env, queue };

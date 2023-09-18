@@ -3,6 +3,9 @@ import { PrismaService } from "../prisma.service";
 import { setting, Prisma } from "@prisma/client";
 import { CustomLoggerService } from "../logger/logger.service";
 import { delay, packageVersion } from "src/util/config";
+import { getLogger } from "src/winston";
+
+const winston = getLogger();
 
 @Injectable()
 export class SettingService {
@@ -82,10 +85,10 @@ export class SettingService {
 
   async intializeTable(chatId: number) {
     const chatSetting = await this.getSettingByChatId(chatId);
-    this.logger.debug("INITIALIZE SETTINGS");
+    winston.debug("INITIALIZE SETTINGS");
 
     if (!chatSetting) {
-      this.logger.debug("settings not found");
+      winston.debug("settings not found");
       return await this.createSetting({
         chat_id: chatId,
         show_changelog: true,
