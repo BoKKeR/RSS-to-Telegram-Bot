@@ -174,7 +174,8 @@ describe("RssService", () => {
         link: "idk",
         name: "test",
         disabled: false,
-        last: "https://www.reddit.com/r/funny/3/"
+        last: "https://www.reddit.com/r/funny/3/",
+        failures: "[]"
       };
 
       // need to do this as I cant hoist any variables on the top of the file
