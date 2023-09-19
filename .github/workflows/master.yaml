@@ -43,3 +43,9 @@ jobs:
         with:
           push: true
           tags: bokker/rss.to.telegram:latest,bokker/rss.to.telegram:${{ steps.package-version.outputs.current-version}}
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: peterevans/dockerhub-description
