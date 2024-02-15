@@ -316,6 +316,14 @@ export class RssService implements OnModuleInit {
           name: rss.name,
           disable: true
         });
+        await this.telegramService.sendRss(
+          rss.chat_id,
+          `Feed failure, disabling feed: ${rss.name}`
+        );
+        await this.telegramService.sendRss(
+          rss.chat_id,
+          JSON.stringify(failures)
+        );
         throw new Error("FEED_FAILURE");
       }
     } catch (error) {
